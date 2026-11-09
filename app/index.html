@@ -195,6 +195,11 @@
        ==================================================================== -->
   <div class="story-viewport" id="story-viewport" style="display: none;">
     
+    <!-- Indicador de Puxar para Baixo para Fechar (Gesto Mobile) -->
+    <div class="story-pull-indicator" id="story-pull-indicator" title="Puxe para baixo para fechar">
+      <div class="pull-indicator-pill"></div>
+    </div>
+
     <!-- Barras de Progresso de Stories no Topo -->
     <div class="story-progress-bar" id="story-progress-bar">
       <!-- Tracinhos gerados via JS -->
@@ -219,6 +224,10 @@
         <button id="btn-toggle-ambience" class="story-ambience-pill" title="Alternar som ambiente de fundo">
           <span id="ambience-icon">🎵</span>
           <span id="ambience-label">Fundo</span>
+        </button>
+        <button id="btn-toggle-autoplay" class="story-autoplay-pill" title="Passagem de revista automática (Auto-Play)">
+          <span id="autoplay-icon">▶</span>
+          <span id="autoplay-label">Auto</span>
         </button>
         <span class="story-scene-counter" id="story-scene-counter">CENA #1</span>
       </div>
@@ -365,6 +374,7 @@
        ==================================================================== -->
   <div class="dossier-drawer-backdrop" id="dossier-drawer-backdrop" style="display: none;">
     <div class="dossier-drawer" id="dossier-drawer">
+      <div class="drawer-pull-indicator"><div class="pull-indicator-pill"></div></div>
       
       <!-- Top Bar Fullscreen -->
       <header class="dossier-fullscreen-header">
@@ -420,6 +430,7 @@
        ==================================================================== -->
   <div class="single-word-drill-backdrop" id="single-word-drill-modal" style="display: none;">
     <div class="single-word-drill-card">
+      <div class="drawer-pull-indicator"><div class="pull-indicator-pill"></div></div>
       <header class="drill-header">
         <div class="drill-badge">🎯 TREINO INDIVIDUAL DE PRONÚNCIA</div>
         <button class="drill-close-btn" id="btn-close-single-drill" title="Fechar Treino">✕</button>

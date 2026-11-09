@@ -245,6 +245,28 @@ export class AmbientSoundEngine {
     }
   }
 
+  stopCurrent() {
+    this.activeTracks.forEach(({ audio }) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (_) {}
+    });
+    this.activeTracks = [];
+    this.currentEnv = null;
+  }
+
+  stopAll() {
+    this.stopCurrent();
+    const themePlayer = typeof document !== 'undefined' ? document.getElementById('theme-audio-player') : null;
+    if (themePlayer) {
+      try {
+        themePlayer.pause();
+        themePlayer.currentTime = 0;
+      } catch (_) {}
+    }
+  }
+
   toggleMute() {
     this.isMuted = !this.isMuted;
     if (this.isMuted) {

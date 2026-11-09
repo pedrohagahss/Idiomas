@@ -24,6 +24,10 @@ class MassiveComicApp {
     this.currentDrillIndex = 0;
     this.currentDrillSourceEl = null;
     this.preloadedImages = new Set();
+    this.isAutoPlay = false;
+    this.autoPlayTimer = null;
+    this.autoPlayFallbackTimer = null;
+    window.__comicApp = this;
   }
 
   init() {
@@ -35,6 +39,8 @@ class MassiveComicApp {
     this.setupTikTokActions();
     this.setupDossierDrawer();
     this.setupSingleWordDrill();
+    this.setupPullToCloseGestures();
+    this.setupPageLeaveListener();
   }
 
   preloadCoreImages() {
@@ -467,6 +473,15 @@ class MassiveComicApp {
       };
     }
 
+    // Botão de Passagem de Revista Automática (Auto-Play)
+    const btnAuto = document.getElementById('btn-toggle-autoplay');
+    if (btnAuto) {
+      btnAuto.onclick = (e) => {
+        e.stopPropagation();
+        this.toggleAutoPlay();
+      };
+    }
+
     window.addEventListener('keydown', (e) => {
       const viewport = document.getElementById('story-viewport');
       if (viewport && viewport.style.display === 'flex') {
@@ -546,6 +561,7 @@ class MassiveComicApp {
         } 
         // Se não está gravando: INICIAR NOVA GRAVAÇÃO POR CIMA
         else {
+          this.pauseAutoPlayTemporarily();
           if (player) {
             try { player.pause(); player.currentTime = 0; } catch(_) {}
           }
@@ -593,6 +609,7 @@ class MassiveComicApp {
     if (btnDossier) {
       btnDossier.onclick = (e) => {
         e.stopPropagation();
+        this.pauseAutoPlayTemporarily();
         this.openDossierDrawer();
       };
     }
@@ -602,6 +619,7 @@ class MassiveComicApp {
     if (btnMiniGame) {
       btnMiniGame.onclick = (e) => {
         e.stopPropagation();
+        this.pauseAutoPlayTemporarily();
         const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
         frenchMiniGame.show(sc.verb_challenge || sc);
       };
@@ -623,6 +641,7 @@ class MassiveComicApp {
     if (btnHome) {
       btnHome.onclick = (e) => {
         e.stopPropagation();
+        if (this.isAutoPlay) this.toggleAutoPlay(false);
         naturalVoice.stop();
         ambientEngine.stopCurrent();
         document.getElementById('story-viewport').style.display = 'none';
@@ -842,6 +861,7 @@ class MassiveComicApp {
   }
 
   openSingleWordDrill(word, ipa = '', meaning = '', sourceEl = null) {
+    this.pauseAutoPlayTemporarily();
     this.currentDrillSourceEl = sourceEl;
     this.displayDrillWord({ word, ipa, meaning, sourceEl });
     const modal = document.getElementById('single-word-drill-modal');
@@ -1216,17 +1236,255 @@ class MassiveComicApp {
       }
     };
 
-    // Reproduz automaticamente a fala em francês daquela cena
-    naturalVoice.speak(scene.dialogue_fr, scene.speaker);
+    // Reproduz automaticamente a fala em francês daquela cena (com suporte a Passagem de Revista Automática)
+    this.pauseAutoPlayTemporarily();
+
+    if (this.isAutoPlay) {
+      const readingDuration = Math.max(4500, (scene.dialogue_fr.length * 85) + 1600);
+
+      const activeFill = document.querySelector('.story-progress-segment.active .story-progress-fill');
+      if (activeFill) {
+        activeFill.style.width = '0%';
+        activeFill.style.transition = 'none';
+        activeFill.classList.remove('autoplay-progress');
+        void activeFill.offsetWidth;
+        activeFill.classList.add('autoplay-progress');
+        activeFill.style.transition = `width ${readingDuration}ms linear`;
+        activeFill.style.width = '100%';
+      }
+
+      naturalVoice.speak(scene.dialogue_fr, scene.speaker, 1.0, () => {
+        if (!this.isAutoPlay) return;
+        this.autoPlayTimer = setTimeout(() => {
+          if (this.isAutoPlay) {
+            this.nextScene();
+          }
+        }, 1200);
+      });
+
+      const fallbackMs = readingDuration + 1500;
+      this.autoPlayFallbackTimer = setTimeout(() => {
+        if (this.isAutoPlay) {
+          this.nextScene();
+        }
+      }, fallbackMs);
+    } else {
+      naturalVoice.speak(scene.dialogue_fr, scene.speaker);
+    }
   }
 
   nextScene() {
-    // Livre: segue diretamente para o próximo story sem interrupções nem bloqueios de 80%
+    this.pauseAutoPlayTemporarily();
     if (this.currentSceneNumber < massiveEngine.totalTargetScenes) {
       this.loadSceneByIndex(this.currentSceneNumber);
     } else {
       this.loadSceneByIndex(0);
     }
+  }
+
+  prevScene() {
+    this.pauseAutoPlayTemporarily();
+    if (this.currentSceneNumber > 1) {
+      this.loadSceneByIndex(this.currentSceneNumber - 2);
+    }
+  }
+
+  toggleAutoPlay(forceState = null) {
+    if (forceState !== null) {
+      this.isAutoPlay = forceState;
+    } else {
+      this.isAutoPlay = !this.isAutoPlay;
+    }
+
+    const btnAuto = document.getElementById('btn-toggle-autoplay');
+    const icon = document.getElementById('autoplay-icon');
+    const label = document.getElementById('autoplay-label');
+
+    if (btnAuto) {
+      btnAuto.classList.toggle('active', this.isAutoPlay);
+    }
+    if (icon) {
+      icon.textContent = this.isAutoPlay ? '⏸️' : '▶';
+    }
+    if (label) {
+      label.textContent = this.isAutoPlay ? 'Pausar' : 'Auto';
+    }
+
+    if (this.isAutoPlay) {
+      this.loadSceneByIndex(this.currentSceneNumber - 1);
+    } else {
+      this.pauseAutoPlayTemporarily();
+    }
+  }
+
+  pauseAutoPlayTemporarily() {
+    if (this.autoPlayTimer) {
+      clearTimeout(this.autoPlayTimer);
+      this.autoPlayTimer = null;
+    }
+    if (this.autoPlayFallbackTimer) {
+      clearTimeout(this.autoPlayFallbackTimer);
+      this.autoPlayFallbackTimer = null;
+    }
+    const activeFill = document.querySelector('.story-progress-segment.active .story-progress-fill');
+    if (activeFill) {
+      activeFill.style.transition = 'none';
+      activeFill.classList.remove('autoplay-progress');
+    }
+  }
+
+  setupPullToCloseGestures() {
+    // 1. Fechamento do Leitor de Stories puxando para baixo
+    const storyViewport = document.getElementById('story-viewport');
+    if (storyViewport) {
+      this.attachPullDownHandler(storyViewport, null, () => {
+        naturalVoice.stop();
+        ambientEngine.stopCurrent();
+        storyViewport.style.display = 'none';
+        document.getElementById('comic-cover-hub').style.display = 'block';
+        if (this.isAutoPlay) this.toggleAutoPlay(false);
+      });
+    }
+
+    // 2. Fechamento da Gaveta de Notícias / Dossier puxando para baixo
+    const dossierDrawer = document.querySelector('.dossier-drawer');
+    const dossierBackdrop = document.getElementById('dossier-drawer-backdrop');
+    if (dossierDrawer) {
+      this.attachPullDownHandler(dossierDrawer, dossierBackdrop, () => {
+        this.closeDossierDrawer();
+      });
+    }
+
+    // 3. Fechamento do Modal de Treino de Palavra Individual puxando para baixo
+    const drillCard = document.querySelector('.single-word-drill-card');
+    const drillBackdrop = document.getElementById('single-word-drill-modal');
+    if (drillCard) {
+      this.attachPullDownHandler(drillCard, drillBackdrop, () => {
+        this.closeSingleWordDrill();
+      });
+    }
+
+    // 4. Fechamento do Livro Aberto / Catálogo puxando para baixo
+    const bookCard = document.querySelector('.book-modal-card');
+    const bookBackdrop = document.getElementById('book-catalog-modal');
+    if (bookCard) {
+      this.attachPullDownHandler(bookCard, bookBackdrop, () => {
+        if (bookBackdrop) bookBackdrop.style.display = 'none';
+      });
+    }
+
+    // 5. Fechamento do Mini-Game puxando para baixo
+    const minigameCard = document.querySelector('.minigame-card');
+    const minigameBackdrop = document.getElementById('minigame-modal');
+    if (minigameCard) {
+      this.attachPullDownHandler(minigameCard, minigameBackdrop, () => {
+        frenchMiniGame.close();
+      });
+    }
+  }
+
+  attachPullDownHandler(element, backdrop, closeFn) {
+    let startY = 0;
+    let startX = 0;
+    let currentY = 0;
+    let isDragging = false;
+    let canPull = false;
+
+    element.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      startY = touch.clientY;
+      startX = touch.clientX;
+      currentY = startY;
+      canPull = (element.scrollTop <= 6);
+      isDragging = false;
+    }, { passive: true });
+
+    element.addEventListener('touchmove', (e) => {
+      if (!canPull || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const deltaY = touch.clientY - startY;
+      const deltaX = touch.clientX - startX;
+
+      if (deltaY > 12 && deltaY > Math.abs(deltaX) * 1.15) {
+        isDragging = true;
+        if (e.cancelable) e.preventDefault();
+        const translateY = Math.max(0, deltaY * 0.72);
+        const opacity = Math.max(0.35, 1 - (translateY / 450));
+        element.style.transition = 'none';
+        element.style.transform = `translateY(${translateY}px)`;
+        if (backdrop) {
+          backdrop.style.transition = 'none';
+          backdrop.style.opacity = `${opacity}`;
+        }
+      }
+    }, { passive: false });
+
+    const finishGesture = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      const touch = e.changedTouches ? e.changedTouches[0] : null;
+      const deltaY = touch ? (touch.clientY - startY) : (currentY - startY);
+
+      if (deltaY > 100) {
+        element.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.22s';
+        element.style.transform = 'translateY(100vh)';
+        element.style.opacity = '0';
+        if (backdrop) {
+          backdrop.style.transition = 'opacity 0.22s';
+          backdrop.style.opacity = '0';
+        }
+        setTimeout(() => {
+          element.style.transform = '';
+          element.style.opacity = '';
+          element.style.transition = '';
+          if (backdrop) {
+            backdrop.style.opacity = '';
+            backdrop.style.transition = '';
+          }
+          closeFn();
+        }, 220);
+      } else {
+        element.style.transition = 'transform 0.2s ease-out, opacity 0.2s';
+        element.style.transform = 'translateY(0)';
+        element.style.opacity = '1';
+        if (backdrop) {
+          backdrop.style.transition = 'opacity 0.2s';
+          backdrop.style.opacity = '1';
+        }
+        setTimeout(() => {
+          element.style.transform = '';
+          element.style.opacity = '';
+          element.style.transition = '';
+          if (backdrop) {
+            backdrop.style.opacity = '';
+            backdrop.style.transition = '';
+          }
+        }, 200);
+      }
+    };
+
+    element.addEventListener('touchend', finishGesture, { passive: true });
+    element.addEventListener('touchcancel', finishGesture, { passive: true });
+  }
+
+  setupPageLeaveListener() {
+    const handleLeave = () => {
+      naturalVoice.stopAllSounds();
+      if (this.isAutoPlay) {
+        this.toggleAutoPlay(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        handleLeave();
+      }
+    });
+
+    window.addEventListener('pagehide', handleLeave);
+    window.addEventListener('beforeunload', handleLeave);
+    window.addEventListener('blur', handleLeave);
   }
 
   showStoryCheckpoint(sc, continueCallback) {
@@ -1300,12 +1558,6 @@ class MassiveComicApp {
     }
 
     modal.style.display = 'flex';
-  }
-
-  prevScene() {
-    if (this.currentSceneNumber > 1) {
-      this.loadSceneByIndex(this.currentSceneNumber - 2);
-    }
   }
 }
 
