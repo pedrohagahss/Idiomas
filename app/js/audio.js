@@ -1,24 +1,25 @@
 /**
  * Motor de Áudio Híbrido de Alta Fidelidade (Studio Quality)
  * - Prioridade 1: Áudio Estático Pré-Renderizado via MP3 em assets/audio/cache (funciona 100% no celular no GitHub Pages).
- * - Prioridade 2: Síntese Dinâmica Neural Microsoft Edge via /api/tts (quando em servidor local/túnel).
- * - Prioridade 3: Web Speech API sincronizada como fallback de contingência.
+ * - Carregamento síncrono instantâneo via AUDIO_MANIFEST (zero 404, zero latência).
+ * - Suporte especial e desbloqueio nativo para iOS Safari e WebKit Mobile.
  * - Encerramento automático de TODOS os sons ao sair da página ou trocar de aba.
  */
 
 import { ambientEngine } from './ambient.js';
+import { AUDIO_MANIFEST } from './audio_manifest.js';
 
 export class NaturalVoiceEngine {
   constructor() {
     this.currentAudio = null;
+    this.masterAudio = null;
     this.synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
     this.voices = [];
-    this.manifest = null;
+    this.manifest = AUDIO_MANIFEST || {};
     this.isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     this.isMobile = typeof navigator !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1));
     this.speechUnlocked = false;
 
-    this.loadManifest();
     this.initVoices();
     if (this.synth && this.synth.onvoiceschanged !== undefined) {
       this.synth.onvoiceschanged = () => this.initVoices();
@@ -28,13 +29,24 @@ export class NaturalVoiceEngine {
     this.setupPageLeaveListener();
   }
 
-  async loadManifest() {
-    try {
-      const res = await fetch('../assets/audio/manifest.json');
-      if (res.ok) {
-        this.manifest = await res.json();
+  getMasterAudio() {
+    if (this.masterAudio && document.contains(this.masterAudio)) {
+      return this.masterAudio;
+    }
+    if (typeof document !== 'undefined') {
+      let el = document.getElementById('speech-master-audio');
+      if (!el) {
+        el = document.createElement('audio');
+        el.id = 'speech-master-audio';
+        el.setAttribute('playsinline', '');
+        el.setAttribute('webkit-playsinline', '');
+        el.style.display = 'none';
+        document.body.appendChild(el);
       }
-    } catch (_) {}
+      this.masterAudio = el;
+      return this.masterAudio;
+    }
+    return null;
   }
 
   getVoice(speaker) {
@@ -59,25 +71,50 @@ export class NaturalVoiceEngine {
     } catch (_) {}
   }
 
+  unlock() {
+    if (this.speechUnlocked) return;
+    this.speechUnlocked = true;
+
+    // 1. Desbloqueia elemento de áudio nativo para o WebKit/Safari
+    const audio = this.getMasterAudio();
+    if (audio) {
+      try {
+        audio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    // 2. Desbloqueia síntese de voz nativa no iOS
+    if (this.synth) {
+      try {
+        this.synth.resume();
+        const silent = new SpeechSynthesisUtterance(' ');
+        silent.volume = 0.01;
+        this.synth.speak(silent);
+      } catch (_) {}
+    }
+
+    ambientEngine.ensureContext();
+  }
+
   setupMobileUnlock() {
     if (typeof window === 'undefined') return;
-    const unlock = () => {
-      if (this.speechUnlocked) return;
-      this.speechUnlocked = true;
-      if (this.synth) {
-        try {
-          this.synth.resume();
-        } catch (_) {}
-      }
-      ambientEngine.ensureContext();
-      window.removeEventListener('touchstart', unlock);
-      window.removeEventListener('touchend', unlock);
-      window.removeEventListener('click', unlock);
+    const unlockHandler = () => {
+      this.unlock();
+      window.removeEventListener('touchstart', unlockHandler);
+      window.removeEventListener('touchend', unlockHandler);
+      window.removeEventListener('click', unlockHandler);
     };
 
-    window.addEventListener('touchstart', unlock, { passive: true });
-    window.addEventListener('touchend', unlock, { passive: true });
-    window.addEventListener('click', unlock, { passive: true });
+    window.addEventListener('touchstart', unlockHandler, { passive: true });
+    window.addEventListener('touchend', unlockHandler, { passive: true });
+    window.addEventListener('click', unlockHandler, { passive: true });
   }
 
   setupPageLeaveListener() {
@@ -96,13 +133,21 @@ export class NaturalVoiceEngine {
   }
 
   stop() {
-    if (this.currentAudio) {
+    const audio = this.getMasterAudio();
+    if (audio) {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch (_) {}
+    }
+    if (this.currentAudio && this.currentAudio !== audio) {
       try {
         this.currentAudio.pause();
         this.currentAudio.currentTime = 0;
       } catch (_) {}
-      this.currentAudio = null;
     }
+    this.currentAudio = null;
+
     if (this.synth) {
       try {
         this.synth.cancel();
@@ -156,10 +201,12 @@ export class NaturalVoiceEngine {
 
     if (staticFile) {
       try {
-        const audio = new Audio(`../assets/audio/cache/${staticFile}`);
+        const audio = this.getMasterAudio() || new Audio();
         audio.preload = 'auto';
         audio.playsInline = true;
         this.currentAudio = audio;
+        audio.src = `../assets/audio/cache/${staticFile}`;
+        audio.currentTime = 0;
         if (rate && rate !== 1.0) audio.playbackRate = rate;
 
         let finished = false;
@@ -178,9 +225,13 @@ export class NaturalVoiceEngine {
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-          await playPromise;
-          return;
+          playPromise.catch(err => {
+            console.warn('Playback suspenso pelo navegador (Safari aguardando toque):', err);
+            // Em caso de bloqueio por falta de toque no Safari, ainda executa o callback para não travar a UI
+            if (onEndCallback) onEndCallback();
+          });
         }
+        return;
       } catch (err) {
         console.warn('Fallback após erro de reprodução estática:', err);
       }
@@ -195,9 +246,11 @@ export class NaturalVoiceEngine {
     if (typeof window !== 'undefined' && !window.location.hostname.includes('github.io')) {
       try {
         const audioUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&speaker=${encodeURIComponent(character)}`;
-        const audio = new Audio(audioUrl);
+        const audio = this.getMasterAudio() || new Audio(audioUrl);
         audio.playsInline = true;
         this.currentAudio = audio;
+        audio.src = audioUrl;
+        audio.currentTime = 0;
         if (rate && rate !== 1.0) audio.playbackRate = rate;
 
         let done = false;
@@ -216,7 +269,9 @@ export class NaturalVoiceEngine {
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-          await playPromise;
+          playPromise.catch(() => {
+            this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
+          });
           return;
         }
       } catch (_) {}
@@ -249,69 +304,45 @@ export class NaturalVoiceEngine {
     const manifestKey = `${voice}_${cleanWord}`;
 
     if (this.manifest && this.manifest[manifestKey]) {
+      const staticFile = this.manifest[manifestKey];
       try {
-        const audio = new Audio(`../assets/audio/cache/${this.manifest[manifestKey]}`);
-        audio.preload = 'auto';
+        const audio = this.getMasterAudio() || new Audio();
         audio.playsInline = true;
         this.currentAudio = audio;
+        audio.src = `../assets/audio/cache/${staticFile}`;
+        audio.currentTime = 0;
         if (rate && rate !== 1.0) audio.playbackRate = rate;
 
-        let done = false;
+        let finished = false;
         const finalize = () => {
-          if (done) return;
-          done = true;
+          if (finished) return;
+          finished = true;
           ambientEngine.unduck();
           if (onEndCallback) onEndCallback();
         };
 
         audio.onended = finalize;
         audio.onerror = () => {
-          this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
+          this.speakWithWebSpeech(cleanWord, character, 0.9 * rate, onEndCallback);
         };
         audio.onpause = () => ambientEngine.unduck();
 
-        const p = audio.play();
-        if (p !== undefined) {
-          await p;
-          return;
-        }
-      } catch (_) {}
-    }
-
-    if (typeof window !== 'undefined' && !window.location.hostname.includes('github.io')) {
-      try {
-        const audioUrl = `/api/tts?text=${encodeURIComponent(cleanWord)}&speaker=${encodeURIComponent(character)}`;
-        const audio = new Audio(audioUrl);
-        audio.playsInline = true;
-        this.currentAudio = audio;
-        if (rate && rate !== 1.0) audio.playbackRate = rate;
-
-        let done = false;
-        const onFinish = () => {
-          if (done) return;
-          done = true;
-          ambientEngine.unduck();
-          if (onEndCallback) onEndCallback();
-        };
-
-        audio.onended = onFinish;
-        audio.onerror = () => {
-          this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
-        };
-
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-          await playPromise;
-          return;
+          playPromise.catch(() => {
+            this.speakWithWebSpeech(cleanWord, character, 0.9 * rate, onEndCallback);
+          });
         }
+        return;
       } catch (_) {}
     }
 
-    this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
+    this.speakWithWebSpeech(cleanWord, character, 0.9 * rate, onEndCallback);
   }
 
-  speakWithWebSpeech(text, character, customRate = null, onEndCallback = null) {
+  speakWithWebSpeech(cleanText, character, rate = 1.0, onEndCallback = null) {
     if (!this.synth) {
+      ambientEngine.unduck();
       if (onEndCallback) onEndCallback();
       return;
     }
@@ -319,68 +350,40 @@ export class NaturalVoiceEngine {
     try {
       this.synth.cancel();
       this.synth.resume();
-    } catch (_) {}
 
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'fr-FR';
-    const charUpper = (character || '').toUpperCase();
-    const isFemale = charUpper.includes('ELENA') || 
-                     charUpper.includes('AMINA') || 
-                     charUpper.includes('MARIE') || 
-                     charUpper.includes('CHARLINE') || 
-                     charUpper.includes('SYLVIE') || 
-                     charUpper.includes('FEMME') || 
-                     charUpper.includes('DAME') || 
-                     charUpper.includes('FILLE');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'fr-FR';
+      utterance.rate = Math.max(0.65, Math.min(1.4, rate));
+      utterance.pitch = 1.0;
 
-    if (isFemale) {
-      utter.pitch = this.isIOS ? 1.15 : 1.2;
-      utter.rate = customRate || 0.88;
-    } else if (charUpper.includes('PEDRO')) {
-      utter.pitch = this.isIOS ? 0.98 : 0.95;
-      utter.rate = customRate || 0.87;
-    } else {
-      utter.pitch = 0.92;
-      utter.rate = customRate || 0.84;
-    }
-
-    if (!this.voices || this.voices.length === 0) {
-      this.initVoices();
-    }
-
-    if (this.voices && this.voices.length > 0) {
-      if (isFemale) {
-        const femaleVoice = this.voices.find(v => /female|denise|hortense|celine|julie|marie|ariane|amelie|aurelie|virginie/i.test(v.name));
-        utter.voice = femaleVoice || this.voices[0];
-      } else {
-        const maleVoice = this.voices.find(v => /male|henri|paul|jean|nicolas|gerard|mathieu|thomas|alain/i.test(v.name));
-        utter.voice = maleVoice || this.voices[0];
+      const speakerUpper = (character || '').toUpperCase();
+      if (speakerUpper.includes('ELENA') || speakerUpper.includes('MARIE') || speakerUpper.includes('FEMME') || speakerUpper.includes('CHARLINE') || speakerUpper.includes('SYLVIE')) {
+        utterance.pitch = 1.15;
+      } else if (speakerUpper.includes('GRIOT') || speakerUpper.includes('NARRATEUR') || speakerUpper.includes('PROF')) {
+        utterance.pitch = 0.9;
       }
-    }
 
-    let finished = false;
-    const finalize = () => {
-      if (finished) return;
-      finished = true;
+      if (this.voices.length > 0) {
+        let bestVoice = this.voices.find(v => v.lang === 'fr-FR' && !v.localService);
+        if (!bestVoice) bestVoice = this.voices.find(v => v.lang && v.lang.startsWith('fr'));
+        if (bestVoice) utterance.voice = bestVoice;
+      }
+
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        ambientEngine.unduck();
+        if (onEndCallback) onEndCallback();
+      };
+
+      utterance.onend = finish;
+      utterance.onerror = finish;
+
+      this.synth.speak(utterance);
+    } catch (_) {
       ambientEngine.unduck();
       if (onEndCallback) onEndCallback();
-    };
-
-    utter.onstart = () => ambientEngine.duck();
-    utter.onend = finalize;
-    utter.onerror = finalize;
-
-    try {
-      this.synth.speak(utter);
-      const maxDuration = Math.max(2500, (text.length * 85) + 1000);
-      setTimeout(() => {
-        if (!finished && (!this.synth.speaking || !this.synth.pending)) {
-          finalize();
-        }
-      }, maxDuration);
-    } catch (e) {
-      console.warn('Erro speechSynthesis:', e);
-      finalize();
     }
   }
 }

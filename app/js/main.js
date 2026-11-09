@@ -270,6 +270,7 @@ class MassiveComicApp {
     const btnHeroPlay = document.getElementById('btn-hero-play');
     if (btnHeroPlay) {
       btnHeroPlay.onclick = () => {
+        naturalVoice.unlock();
         const defaultWork = massiveEngine.getWork('pedro_biography');
         massiveEngine.selectWork(defaultWork.id);
         hub.style.display = 'none';
@@ -332,14 +333,23 @@ class MassiveComicApp {
     if (objText) objText.textContent = work.objective || 'Atingir média mínima de 80% em áudio gravado e atividades de verbos para destravar todos os capítulos.';
 
     if (btnPlayMusic) {
-      btnPlayMusic.onclick = () => {
-        const audioUrl = (work.soundtrack && work.soundtrack.file) || work.musicTrack || '../assets/audio/opening_theme.mp3';
-        const player = document.getElementById('theme-audio-player');
-        if (player) {
-          player.src = audioUrl;
-          player.play().catch(() => {});
-        }
-      };
+      if (work.soundtrack && work.soundtrack.file) {
+        btnPlayMusic.style.display = 'inline-flex';
+        btnPlayMusic.innerHTML = '<span>▶ Tocar Trilha Oficial</span>';
+        btnPlayMusic.onclick = () => {
+          const player = document.getElementById('theme-audio-player');
+          if (player) {
+            player.src = work.soundtrack.file;
+            player.play().catch(() => {});
+          }
+        };
+      } else {
+        btnPlayMusic.style.display = 'inline-flex';
+        btnPlayMusic.innerHTML = '<span>🎵 Gerar no Suno AI</span>';
+        btnPlayMusic.onclick = () => {
+          if (btnViewSuno) btnViewSuno.click();
+        };
+      }
     }
 
     // Modal de Detalhes do Suno (Letra em 1 parágrafo, Prompt Marie, Influências Underground)
@@ -422,6 +432,7 @@ class MassiveComicApp {
         `;
 
         row.onclick = () => {
+          naturalVoice.unlock();
           modal.style.display = 'none';
           document.getElementById('comic-cover-hub').style.display = 'none';
           document.getElementById('story-viewport').style.display = 'flex';
@@ -435,6 +446,7 @@ class MassiveComicApp {
 
     if (btnStartAll) {
       btnStartAll.onclick = () => {
+        naturalVoice.unlock();
         massiveEngine.selectWork(work.id);
         modal.style.display = 'none';
         document.getElementById('comic-cover-hub').style.display = 'none';

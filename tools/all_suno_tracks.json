@@ -1,0 +1,102 @@
+[
+  {
+    "bookIndex": 1,
+    "bookTitle": "Pedro Hagah : De Recife à l'IA Mondiale",
+    "country": "Recife & Paris (Brésil / France)",
+    "trackTitle": "L'Aventure Francophone (Theme Underground)",
+    "musicalStyle": "Influências musicais: Kavinsky, Woodkid, Gesaffelstein e Boy Harsher. Estilo Dark Synthwave / Electro-Indie francês com sintetizadores analógicos pesados (Moog/Prophet), batida eletrônica reta 4x4, atmosfera cyberpunk sóbria e cinematográfica, sem nenhum clichê de acordeom ou chanson tradicional.",
+    "sunoPrompt": "Darkwave coldwave electro track with a hypnotic driving analog bassline, 128 BPM, French vocal delivery. Male lead spoken-sung with steady determination, alternating with female vocal (Marie) ethereal and crystal-clear in French. Difficult phonetic transitions to execute sharply: 'l'aube et j'avance' [lob e ʒa.vɑ̃s], 'grâce au travail acharné' [ɡʁas o tʁa.vaj a.ʃaʁ.ne], and the nasal contrast in 'nous avons appris' [nu.z‿a.vɔ̃ a.pʁi] vs 'rien attendre' [ʁjɛ̃ a.tɑ̃dʁ]. Marie takes the soaring chorus on 'afin de relier deux mondes' with subtle vocoder and tape echo.",
+    "lyricsFr": "Dans la lueur des néons de Recife jusqu'aux ponts froids de la Seine, je me lève avant l'aube et j'avance sans trembler. J'ai tracé des lignes de code comme on érige des forteresses, j'ai traversé l'océan avec la certitude des bâtisseurs, et grâce au travail acharné j'ai transformé le doute en architecture vivante. Nous avons appris à ne rien attendre du hasard, à sculpter le silicium pour que la voix humaine résonne plus juste, afin de relier deux mondes que la mer sépare mais que l'esprit rassemble.",
+    "synopsisPt": "A trajetória real de Pedro Henrique Soares Silva, da SAGA e Ariano Suassuna à JT Seu Carro PE e arquitetura de IA em Paris e Montréal."
+  },
+  {
+    "bookIndex": 2,
+    "bookTitle": "Bruxelles : Grand-Place, BD & Chocolat",
+    "country": "Bélgica (Bruxelles)",
+    "trackTitle": "Bruxelles Minuit (EBM Minimal Wave)",
+    "musicalStyle": "Influências musicais: Front 242, Vive la Fête, Telex e Compact Disk Dummies. Estilo Electronic Body Music (EBM) / Minimal Wave belga, sintetizadores pulsantes, ritmo seco, urbano e irônico, retratando o contraste entre a arquitetura gótica e o submundo noturno dos clubes alternativos de Bruxelas.",
+    "sunoPrompt": "Belgian EBM and minimal wave underground track, 124 BPM, deep Roland TR-808 percussion with punchy snare and detuned synthesizer chords. Male dry voice spoken in punchy French, punctuated by Marie singing harmonic counter-melodies. Difficult vocal lines: 'pavés de la Grand-Place' [pa.ve də la ɡʁɑ̃.plas], 'odeur amère du cacao brut' [o.dœʁ a.mɛʁ dy ka.ka.o bʁyt], and the rapid rhythmic articulation of 'parce que la liberté commence' [paʁs kə la li.bɛʁ.te kɔ.mɑ̃s]. Marie cuts through the low-end with crisp high-register French phonetics.",
+    "lyricsFr": "Sous la pluie fine qui lave les pavés de la Grand-Place, je vois des ombres dorées s'étirer contre la pierre froide et j'entends le rire franc des noctambules. Nous marchons sans parapluie le long des briques rouges, nous sentons l'odeur amère du cacao brut et le vent du nord qui fouette les visages, refusant toute solennité parce que la liberté commence là où l'orgueil s'efface, dans un éclat de rire qui désarme la nuit.",
+    "synopsisPt": "Uma jornada inesquecível pelo coração de Bruxelas: a deslumbrante Grand-Place, o Museu da BD de Victor Horta, os mestres do cacau no Sablon, o Atomium e a irreverência popular dos Marolles."
+  },
+  {
+    "bookIndex": 3,
+    "bookTitle": "Genève & Guillaume Tell",
+    "country": "Suisse (Genève & Alpes)",
+    "trackTitle": "Léman Icy Cimes (Alpine Coldwave)",
+    "musicalStyle": "Influências musicais: The Young Gods (Suíça), Joy Division, Lebanon Hanover e Kaelan Mikla. Estilo Coldwave Alpino / Post-Punk Suíço, guitarras cortantes como gelo, batida precisa e mecânica, transmitindo a calma imponente das montanhas e o rigor científico de Genebra.",
+    "sunoPrompt": "Alpine post-punk meets ambient synthwave, 120 BPM, atmospheric shimmering guitars with icy reverb and mechanical drum machine. Male vocal cold and sharp, Marie harmonizing on the hook with pristine breathy articulation. Challenging French pronunciation segments: 'reflétera les lumières' [ʁə.flɛt.ʁa le ly.mjɛʁ], 'nous franchirons les sommets' [nu fʁɑ̃.ʃi.ʁɔ̃ le sɔ.mɛ], and the liaison in 'horloge atomique' [ɔʁ.lɔ.ʒ‿a.tɔ.mik]. Marie delivers an echoing high chant over the synth pads.",
+    "lyricsFr": "Quand l'eau glacée du Léman reflétera les lumières blanches du laboratoire, nous franchirons les sommets sans un regard en arrière. Je regarderai l'horizon précis comme une horloge atomique, je tiendrai parole devant les géants de pierre, et nos voix traverseront le brouillard des vallées pour rappeler que chaque seconde compte et que la vérité se forge dans le silence des cimes.",
+    "synopsisPt": "Das águas serenas do Lago Léman com o majestoso Jet d'Eau ao laboratório subatômico do CERN, passando pelo mito de Guilherme Tell e a relojoaria de precisão dos Alpes suíços."
+  },
+  {
+    "bookIndex": 4,
+    "bookTitle": "Sénégal : Le Baobab et Leuk-le-Lièvre",
+    "country": "Sénégal (Dakar & Gorée)",
+    "trackTitle": "Dakar Sub-808 (Afro Darkwave)",
+    "musicalStyle": "Influências musicais: Pierre Kwenders, Batida, Francis Bebey moderno e Spoek Mathambo. Estilo Afro-Futurismo Eletrônico / Dark Electro Dakar, ritmos sincopados e hipnóticos com texturas analógicas densas, celebrando a ancestralidade sem cair no folclore convencional.",
+    "sunoPrompt": "Afro-electronic darkwave fusion, 116 BPM, deep analog 808 sub-bass blended with sharp kora harmonics and driving electronic hi-hats. Male vocal deep, solemn, resonant, with Marie chanting call-and-response phrases in melodic, poignant French. Pronunciation challenges: 'soufflait sur les racines' [su.flɛ syʁ le ʁa.sin], 'braises brûlaient' [bʁɛz bʁy.lɛ], and the nasal liaison 'ceux qui étaient partis' [sø ki e.tɛ paʁ.ti]. Marie's vocals provide a haunting, melodic lift in the mid-tempo drop.",
+    "lyricsFr": "Le vent soufflait sur les racines de l'arbre géant et nous écoutions la poussière rouge murmurer le nom de ceux qui étaient partis. La nuit enveloppait les toits d'argile tandis que les braises brûlaient sans bruit, et nous savions déjà que les mots véritables ne meurent jamais car ils voyagent dans le sang de ceux qui restent debout.",
+    "synopsisPt": "Sob o baobá milenar do Senegal, as fábulas de Leuk-a-Lebre, os cantos de Senghor, a memória sagrada da Ilha de Gorée e a acolhida fraterna da Teranga."
+  },
+  {
+    "bookIndex": 5,
+    "bookTitle": "Québec : La Chasse-Galerie boréale",
+    "country": "Québec (Canada)",
+    "trackTitle": "Chasse Boréale Fuzz (Nordic Post-Rock)",
+    "musicalStyle": "Influências musicais: Arcade Fire (era Funeral), Godspeed You! Black Emperor, Malajube e Hubert Lenoir. Estilo Post-Rock Laurentino / Indie Rock Boreale com guitarras elétricas épicas, energia crua e reverbs imensos do inverno quebequense.",
+    "sunoPrompt": "Nordic indie rock / post-rock with heavy fuzz bass, 132 BPM, driving live-sounding compressed drums, distorted tremolo guitar layers. Male vocal urgent, raw, textured, trading verses with Marie whose voice is clear and fierce. Challenging articulatory phrases: 'blizzard déchirait' [bli.zaʁ de.ʃi.ʁɛ], 'échapper aux ombres' [e.ʃa.pe o.z‿ɔ̃bʁ], and the conditionnel endings 'nous voudrions / il faudrait' [nu vu.dʁi.jɔ̃ / il fo.dʁɛ]. Marie sings the climactic counterpoint on the final hook.",
+    "lyricsFr": "Si le blizzard déchirait le ciel noir au-dessus du Saint-Laurent, nous voudrions voler plus haut que les conifères gelés pour échapper aux ombres du pacte. Il faudrait garder le cap malgré le vertige de l'orage, serrer la rame contre sa poitrine et refuser de céder son âme à la tempête, car même dans l'hiver le plus rude la flamme intérieure ne s'éteint pas.",
+    "synopsisPt": "Na imensidão branca de Laurentides e ruelas fortificadas de Québec, a lenda da Canoa Voadora, a resistência francófona do 'Je me souviens' e o calor das cabanas de açúcar."
+  },
+  {
+    "bookIndex": 6,
+    "bookTitle": "Paris : Les Lumières et la Cité d'Ys",
+    "country": "France (Paris & Lumières)",
+    "trackTitle": "Bitume Incendie (French Synth-Punk)",
+    "musicalStyle": "Influências musicais: La Femme, Frustration, Rendez-Vous e Sexy Sushi. Estilo French Post-Punk / Synth-Punk parisiense, direto, visceral, urbano e livre de nostalgia romântica.",
+    "sunoPrompt": "French synth-punk / coldwave track, 136 BPM, aggressive driving synth bass, metallic snare, motorik drum pulse. Spoken-word deliver in sharp rhythmic Parisian French, paired with Marie singing rapid anthemic refrains. Difficult phonetic transitions: 'bitume de Paris' [bi.tym də pa.ʁi], 'bien que les réverbères' [bjɛ̃ kə le ʁe.vɛʁ.bɛʁ], and 'incendie lucide' [ɛ̃.sɑ̃.di ly.sid]. Marie sings the chorus with raw post-punk urgency.",
+    "lyricsFr": "Dans les catacombes oubliées sous le bitume de Paris, la nuit gronde bien que les réverbères prétendent éclairer nos pas. Pourtant nous avançons les yeux ouverts sans céder aux illusions dorées des salons, néanmoins chaque mot gravé dans la pierre témoigne d'un combat silencieux pour que la liberté ne soit pas un vain refrain mais un incendie lucide qui traverse les siècles.",
+    "synopsisPt": "Do Café Procope dos enciclopedistas e da queda da Bastilha em 1789 à cripta solene do Panthéon, os embates de Victor Hugo e a Paris digital contemporânea."
+  },
+  {
+    "bookIndex": 7,
+    "bookTitle": "Maroc : Fès et l'Héritage d'Al Quaraouiyine",
+    "country": "Maroc (Fès & Maghreb)",
+    "trackTitle": "Ocre Médina (Desert Ambient Electro)",
+    "musicalStyle": "Influências musicais: Acid Arab, Deena Abdelwahed, Master Musicians of Jajouka meets dark electronic. Estilo Electro-Chaabi Dark / Deep Desert Ambient, hipnótico e intelectual.",
+    "sunoPrompt": "Maghrebi dark ambient electro, 118 BPM, deep desert groove with analog bass, microtonal synth arpeggios and reverb-drenched percussion. Male voice low, reflective, philosophical; Marie provides melodic melismatic French vocals with micro-ornamentations. Difficult phonetic steps: 'hauts murs ocres' [o myʁ.z‿ɔkʁ], 'ce que la hâte détruit' [sə kə la at de.tʁɥi], and 'inaltérable' [in.al.te.ʁabl]. Marie sings the high melodic bridge.",
+    "lyricsFr": "Entre les hauts murs ocres de la médina je pense souvent à ces millénaires d'écriture qui ont défié le sable. Je sais que la patience construit ce que la hâte détruit en un instant, nous croyons à la clarté des esprits qui dialoguent au crépuscule, et lorsque la poussière retombe sur la cour des bibliothèques la mémoire demeure le seul rempart inaltérable.",
+    "synopsisPt": "No labirinto da medina medieval de Fez, a Universidade Al Quaraouiyine fundada por Fatima al-Fihriya em 859, os azulejos de Bab Bou Jeloud e o ritual do chá com hortelã."
+  },
+  {
+    "bookIndex": 8,
+    "bookTitle": "Haïti : La Citadelle et les Tambours de 1804",
+    "country": "Haïti (Caraïbes)",
+    "trackTitle": "1804 Tambour Féroce (Industrial Vodou Rock)",
+    "musicalStyle": "Influências musicais: Chouk Bwa & The Ångströmers, Moonlight Benjamin, Young Fathers. Estilo Industrial Vodou Rock / Dark Caribbean Electronics, poderoso, intransigente e visceral.",
+    "sunoPrompt": "Industrial electro-vodou percussion, 126 BPM, thundering organic percussion mixed with distorted industrial sub-kicks and razor-sharp synths. Deep male chant with Marie singing soaring defiant anthems. Pronunciation hurdles: 'crêtes rocheuses' [kʁɛt ʁɔ.ʃøz], 'ont été brisées' [ɔ̃.t‿e.te bʁi.ze], and 'ne se marchande jamais' [nə sə maʁ.ʃɑ̃d ʒa.mɛ]. Marie sings the soaring chorus with explosive power.",
+    "lyricsFr": "Sur les crêtes rocheuses où la Citadelle défie l'ouragan, aucun peuple ne peut être enchaîné pour toujours sans que la roche elle-même ne se soulève. Les chaînes ont été brisées par ceux qui ont préféré la mort à la soumission, et nos voix proclamées au son des tambours nocturnes rappellent au monde entier que la dignité humaine ne se marchande jamais sous aucun ciel.",
+    "synopsisPt": "No topo das montanhas de Milot, a imponente Cidadela Laferrière, o juramento do Bois-Caïman, a liderança de Toussaint Louverture e a fundação da primeira república negra livre em 1804."
+  },
+  {
+    "bookIndex": 9,
+    "bookTitle": "RD Congo : Kinshasa et la Rumba du Fleuve",
+    "country": "RD Congo (Kinshasa & Fleuve)",
+    "trackTitle": "Fleuve Congotronics (Techno-Punk Kinshasa)",
+    "musicalStyle": "Influências musicais: Konono No.1, Kasai Allstars, KOKOKO! e Mbongwana Star. Estilo Congotronics / DIY Electro-Punk de Kinshasa, alta energia, distorção orgânica e elegância urbana incorruptível.",
+    "sunoPrompt": "Congotronics meets techno-punk, 130 BPM, distorted likembe (thumb piano), buzzing electric DIY percussion, relentless dance groove. Energetic male spoken delivery with Marie performing upbeat melodic hooks. Challenging phrases: 'moiteur électrique' [mwa.tœʁ e.lɛk.tʁik], 'conjurer la nuit' [kɔ̃.ʒy.ʁe la nɥi], and 'ferraille en instruments' [fɛ.ʁaj ɑ̃.n‿ɛ̃s.tʁy.mɑ̃]. Marie's vocal is bright, syncopated and rhythmically relentless.",
+    "lyricsFr": "Sous la moiteur électrique de Kinshasa nous transformons la ferraille en instruments et la nuit en fête triomphale. Nous marchons avec élégance au bord du grand fleuve qui gronde, nous inventons des couleurs pour conjurer la nuit grise, car créer n'est pas un luxe mais la seule manière de rester vivant face aux turbulences du monde.",
+    "synopsisPt": "Nas margens do imenso Rio Congo, a rumba congolesa patrimônio da UNESCO, o dandismo da SAPE, a criatividade da maior metrópole francófona do planeta."
+  },
+  {
+    "bookIndex": 10,
+    "bookTitle": "Madagascar : L'Allée des Baobabs et Ibonia",
+    "country": "Madagascar (Océan Indien)",
+    "trackTitle": "Valiha Nébuleuse (Ambient Dark-Folk)",
+    "musicalStyle": "Influências musicais: Razia Said, Toko Telo em versão eletrônica, Damily, ambient world de Brian Eno e Jon Hassell. Estilo Ambient Dark-Folk Malgaxe, orgânico, contemplativo e envolvente.",
+    "sunoPrompt": "Malagasy valiha ambient dark-folk, 114 BPM, gentle polyrhythmic valiha picking paired with deep warm analog synth pads and slow hypnotic kick. Soft spoken male vocal, Marie singing sweet yet solemn ethereal Malagasy-French melodies. Pronunciation challenges: 'que nous protégions' [kə nu pʁɔ.te.ʒjɔ̃], 'que chacun sache' [kə ʃa.kœ̃ saʃ], and 'bruissement des feuilles' [bʁɥis.mɑ̃ de fœj]. Marie sings the floating ambient outro.",
+    "lyricsFr": "Bien que le temps passe et que les saisons s'effacent, il faut que nous protégions chaque racine plantée dans cette terre rouge. Que chacun sache que la parole donnée vaut plus que tout l'or du monde, et qu'il apprenne à écouter le bruissement des feuilles avant de juger les actes de son frère.",
+    "synopsisPt": "Na Grande Ilha Vermelha do Oceano Índico, a Alameda dos Baobás de Morondava, a epopeia de Ibonia, a biodiversidade e a sabedoria ancestral do Fihavanana."
+  }
+]
