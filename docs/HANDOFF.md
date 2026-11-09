@@ -1,7 +1,7 @@
 # HANDOFF — Estado do projeto (fonte da verdade do progresso)
 
-**Última sessão:** 2026-11-08 · Antigravity — Link online restabelecido via Cloudflare Tunnel (`mil-alaska-stolen-plans.trycloudflare.com`). Feedback de qualificação de fala reimplementado diretamente nas palavras do balão de fala da cena (zero poluição de tela, modal invasivo desativado). Navegação entre stories e capítulos 100% liberada sem bloqueios ou travas de 80%. Nova ilustração vertical de Genebra (Jet d'Eau / Pedro Hagah) gerada e vinculada.
-**Próxima tarefa:** Continuidade na geração de novas artes para os livros de cada país e polimento dos desafios orais.
+**Última sessão:** 2026-11-09 · Antigravity — Pipeline de áudio neural completo integrado: 3.142 clipes MP3 de estúdio gerados para todos os 308 diálogos, 308 legendas do narrador, dossiês culturais e 2.325 palavras de vocabulário, eliminando qualquer voz robótica do navegador. Safari iOS e desktop 100% responsivos: removido o `zoom: 0.8` (que causava cortes na viewport do Safari) e implementada escala proporcional multi-dispositivo pura (82% font-base + elementos compactos sem truncar tela nem dock). Gerador Suno AI customizado em modal com prompts por livro. Versão v7 publicada com sucesso no GitHub Pages (`https://pedrohagahss.github.io/Idiomas/app/index.html?v=20261109_7`).
+**Próxima tarefa:** Testes de usabilidade ao vivo com o usuário em Safari mobile e demais dispositivos; criação das músicas Suno AI conforme os prompts gerados.
 
 ## Como continuar (para o próximo modelo)
 1. Leia `AGENTS.md` (regras) — contém as regras do usuário (PT-BR, opções numeradas, voz Piper).
