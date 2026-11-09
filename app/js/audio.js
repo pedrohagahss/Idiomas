@@ -1,8 +1,9 @@
 /**
- * Motor de Áudio Híbrido — Vozes Neurais e Síntese Web Speech Mobile
- * - Em servidor local/túnel: Áudio Neural Microsoft Edge de Estúdio via /api/tts.
- * - No GitHub Pages / Mobile: Web Speech API direta e síncrona com desbloqueio touch nativo (iOS/Android).
- * - Encerramento automático de TODOS os sons ao sair da página, mudar de aba ou minimizar.
+ * Motor de Áudio Híbrido de Alta Fidelidade (Studio Quality)
+ * - Prioridade 1: Áudio Estático Pré-Renderizado via MP3 em assets/audio/cache (funciona 100% no celular no GitHub Pages).
+ * - Prioridade 2: Síntese Dinâmica Neural Microsoft Edge via /api/tts (quando em servidor local/túnel).
+ * - Prioridade 3: Web Speech API sincronizada como fallback de contingência.
+ * - Encerramento automático de TODOS os sons ao sair da página ou trocar de aba.
  */
 
 import { ambientEngine } from './ambient.js';
@@ -12,14 +13,12 @@ export class NaturalVoiceEngine {
     this.currentAudio = null;
     this.synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
     this.voices = [];
+    this.manifest = null;
     this.isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     this.isMobile = typeof navigator !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1));
-    this.isStaticHost = typeof window !== 'undefined' && (
-      window.location.hostname.includes('github.io') ||
-      (!window.location.port && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('trycloudflare') && !window.location.hostname.includes('127.0.0.1'))
-    );
     this.speechUnlocked = false;
 
+    this.loadManifest();
     this.initVoices();
     if (this.synth && this.synth.onvoiceschanged !== undefined) {
       this.synth.onvoiceschanged = () => this.initVoices();
@@ -27,6 +26,30 @@ export class NaturalVoiceEngine {
 
     this.setupMobileUnlock();
     this.setupPageLeaveListener();
+  }
+
+  async loadManifest() {
+    try {
+      const res = await fetch('../assets/audio/manifest.json');
+      if (res.ok) {
+        this.manifest = await res.json();
+      }
+    } catch (_) {}
+  }
+
+  getVoice(speaker) {
+    const s = (speaker || '').toUpperCase();
+    if (s.includes('ELENA')) return 'fr-FR-DeniseNeural';
+    if (s.includes('AMINA')) return 'fr-FR-VivienneMultilingualNeural';
+    if (s.includes('MARIE')) return 'fr-CH-ArianeNeural';
+    if (s.includes('CHARLINE') || s.includes('BELGE_FEMME')) return 'fr-BE-CharlineNeural';
+    if (s.includes('SYLVIE') || s.includes('QUEBEC_FEMME')) return 'fr-CA-SylvieNeural';
+    if (s.includes('MATHIEU') || s.includes('MARIN') || s.includes('JEAN-BAPTISTE')) return 'fr-CA-JeanNeural';
+    if (s.includes('YANN')) return 'fr-BE-GerardNeural';
+    if (s.includes('LUCAS')) return 'fr-CH-FabriceNeural';
+    if (s.includes('GRIOT') || s.includes('NARRATEUR') || s.includes('PROF') || s.includes('GUIDE')) return 'fr-FR-RemyMultilingualNeural';
+    if (s.includes('FEMME') || s.includes('DAME') || s.includes('FILLE') || s.includes('WOMAN')) return 'fr-FR-DeniseNeural';
+    return 'fr-FR-HenriNeural';
   }
 
   initVoices() {
@@ -44,12 +67,6 @@ export class NaturalVoiceEngine {
       if (this.synth) {
         try {
           this.synth.resume();
-          const dummy = new SpeechSynthesisUtterance(' ');
-          dummy.volume = 0.01;
-          this.synth.speak(dummy);
-          setTimeout(() => {
-            try { this.synth.cancel(); } catch (_) {}
-          }, 40);
         } catch (_) {}
       }
       ambientEngine.ensureContext();
@@ -66,24 +83,16 @@ export class NaturalVoiceEngine {
   setupPageLeaveListener() {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-    // Quando o usuário sai da página, troca de aba ou minimiza o navegador
+    const stopHandler = () => {
+      this.stopAllSounds();
+    };
+
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        this.stopAllSounds();
-      }
+      if (document.hidden) stopHandler();
     });
-
-    window.addEventListener('pagehide', () => {
-      this.stopAllSounds();
-    });
-
-    window.addEventListener('beforeunload', () => {
-      this.stopAllSounds();
-    });
-
-    window.addEventListener('blur', () => {
-      this.stopAllSounds();
-    });
+    window.addEventListener('pagehide', stopHandler);
+    window.addEventListener('beforeunload', stopHandler);
+    window.addEventListener('blur', stopHandler);
   }
 
   stop() {
@@ -106,7 +115,6 @@ export class NaturalVoiceEngine {
     this.stop();
     ambientEngine.stopAll();
 
-    // Interrompe qualquer elemento <audio> presente no documento
     if (typeof document !== 'undefined') {
       const allAudios = document.querySelectorAll('audio');
       allAudios.forEach(a => {
@@ -117,7 +125,6 @@ export class NaturalVoiceEngine {
       });
     }
 
-    // Notifica app para pausar auto-play se estiver ativo
     if (typeof window !== 'undefined' && window.__comicApp && window.__comicApp.isAutoPlay) {
       window.__comicApp.toggleAutoPlay(false);
     }
@@ -138,49 +145,84 @@ export class NaturalVoiceEngine {
 
     ambientEngine.duck();
 
-    // No GitHub Pages ou dispositivos móveis sem backend ativo:
-    // Dispara a Web Speech API IMEDIATAMENTE de forma síncrona para preservar o gesto do usuário!
-    if (this.isStaticHost) {
-      this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
-      return;
+    const voice = this.getVoice(character);
+    const manifestKey = `${voice}_${cleanText}`;
+
+    // 1. TENTA REPRODUÇÃO DIRETA DO ARQUIVO MP3 ESTÁTICO (Zero latência, funciona no GitHub Pages no celular)
+    let staticFile = null;
+    if (this.manifest && this.manifest[manifestKey]) {
+      staticFile = this.manifest[manifestKey];
     }
 
-    // Em servidor local ou túnel Cloudflare: Áudio Neural Microsoft Edge Studio
-    try {
-      const audioUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&speaker=${encodeURIComponent(character)}`;
-      const audio = new Audio(audioUrl);
-      this.currentAudio = audio;
-      if (rate && rate !== 1.0) {
-        audio.playbackRate = rate;
+    if (staticFile) {
+      try {
+        const audio = new Audio(`../assets/audio/cache/${staticFile}`);
+        audio.preload = 'auto';
+        audio.playsInline = true;
+        this.currentAudio = audio;
+        if (rate && rate !== 1.0) audio.playbackRate = rate;
+
+        let finished = false;
+        const finalize = () => {
+          if (finished) return;
+          finished = true;
+          ambientEngine.unduck();
+          if (onEndCallback) onEndCallback();
+        };
+
+        audio.onended = finalize;
+        audio.onerror = () => {
+          this.speakFallback(cleanText, character, rate, onEndCallback);
+        };
+        audio.onpause = () => ambientEngine.unduck();
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          return;
+        }
+      } catch (err) {
+        console.warn('Fallback após erro de reprodução estática:', err);
       }
-
-      let done = false;
-      const onFinish = () => {
-        if (done) return;
-        done = true;
-        ambientEngine.unduck();
-        if (onEndCallback) onEndCallback();
-      };
-
-      audio.onended = onFinish;
-      audio.onerror = () => {
-        ambientEngine.unduck();
-        // Fallback síncrono para Web Speech
-        this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
-      };
-      audio.onpause = () => {
-        ambientEngine.unduck();
-      };
-
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-        return;
-      }
-    } catch (err) {
-      console.warn('Fallback para Web Speech API:', err);
     }
 
+    // 2. Se não estiver no cache estático, tenta fallback
+    this.speakFallback(cleanText, character, rate, onEndCallback);
+  }
+
+  async speakFallback(cleanText, character, rate, onEndCallback) {
+    // Se estiver em ambiente com servidor Node / túnel ativo
+    if (typeof window !== 'undefined' && !window.location.hostname.includes('github.io')) {
+      try {
+        const audioUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&speaker=${encodeURIComponent(character)}`;
+        const audio = new Audio(audioUrl);
+        audio.playsInline = true;
+        this.currentAudio = audio;
+        if (rate && rate !== 1.0) audio.playbackRate = rate;
+
+        let done = false;
+        const onFinish = () => {
+          if (done) return;
+          done = true;
+          ambientEngine.unduck();
+          if (onEndCallback) onEndCallback();
+        };
+
+        audio.onended = onFinish;
+        audio.onerror = () => {
+          this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
+        };
+        audio.onpause = () => ambientEngine.unduck();
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          return;
+        }
+      } catch (_) {}
+    }
+
+    // 3. Fallback Web Speech API síncrona
     this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
   }
 
@@ -203,42 +245,67 @@ export class NaturalVoiceEngine {
 
     ambientEngine.duck();
 
-    if (this.isStaticHost) {
-      this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
-      return;
+    const voice = this.getVoice(character);
+    const manifestKey = `${voice}_${cleanWord}`;
+
+    if (this.manifest && this.manifest[manifestKey]) {
+      try {
+        const audio = new Audio(`../assets/audio/cache/${this.manifest[manifestKey]}`);
+        audio.preload = 'auto';
+        audio.playsInline = true;
+        this.currentAudio = audio;
+        if (rate && rate !== 1.0) audio.playbackRate = rate;
+
+        let done = false;
+        const finalize = () => {
+          if (done) return;
+          done = true;
+          ambientEngine.unduck();
+          if (onEndCallback) onEndCallback();
+        };
+
+        audio.onended = finalize;
+        audio.onerror = () => {
+          this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
+        };
+        audio.onpause = () => ambientEngine.unduck();
+
+        const p = audio.play();
+        if (p !== undefined) {
+          await p;
+          return;
+        }
+      } catch (_) {}
     }
 
-    try {
-      const audioUrl = `/api/tts?text=${encodeURIComponent(cleanWord)}&speaker=${encodeURIComponent(character)}`;
-      const audio = new Audio(audioUrl);
-      this.currentAudio = audio;
-      if (rate && rate !== 1.0) {
-        audio.playbackRate = rate;
-      }
+    if (typeof window !== 'undefined' && !window.location.hostname.includes('github.io')) {
+      try {
+        const audioUrl = `/api/tts?text=${encodeURIComponent(cleanWord)}&speaker=${encodeURIComponent(character)}`;
+        const audio = new Audio(audioUrl);
+        audio.playsInline = true;
+        this.currentAudio = audio;
+        if (rate && rate !== 1.0) audio.playbackRate = rate;
 
-      let done = false;
-      const onFinish = () => {
-        if (done) return;
-        done = true;
-        ambientEngine.unduck();
-        if (onEndCallback) onEndCallback();
-      };
+        let done = false;
+        const onFinish = () => {
+          if (done) return;
+          done = true;
+          ambientEngine.unduck();
+          if (onEndCallback) onEndCallback();
+        };
 
-      audio.onended = onFinish;
-      audio.onerror = () => {
-        ambientEngine.unduck();
-        this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
-      };
-      audio.onpause = () => {
-        ambientEngine.unduck();
-      };
+        audio.onended = onFinish;
+        audio.onerror = () => {
+          this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
+        };
 
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        await playPromise;
-        return;
-      }
-    } catch (_) {}
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          return;
+        }
+      } catch (_) {}
+    }
 
     this.speakWithWebSpeech(cleanWord, character, 0.85 * rate, onEndCallback);
   }
@@ -299,23 +366,20 @@ export class NaturalVoiceEngine {
       if (onEndCallback) onEndCallback();
     };
 
-    utter.onstart = () => {
-      ambientEngine.duck();
-    };
+    utter.onstart = () => ambientEngine.duck();
     utter.onend = finalize;
     utter.onerror = finalize;
 
     try {
       this.synth.speak(utter);
-      // Proteção Safari iOS: garante timeout caso o evento onend seja suprimido
-      const maxDuration = Math.max(2800, (text.length * 85) + 1200);
+      const maxDuration = Math.max(2500, (text.length * 85) + 1000);
       setTimeout(() => {
         if (!finished && (!this.synth.speaking || !this.synth.pending)) {
           finalize();
         }
       }, maxDuration);
     } catch (e) {
-      console.warn('Erro ao disparar speechSynthesis:', e);
+      console.warn('Erro speechSynthesis:', e);
       finalize();
     }
   }
