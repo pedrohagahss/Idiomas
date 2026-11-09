@@ -4,7 +4,14 @@
  * com áudio neural nativo para repetição, quiz rápido de fixação e reconstrução de frases.
  */
 
+/**
+ * MÓDULO INTERATIVO DE DESAFIOS & TREINO DE TEMPOS VERBAIS (MINI-GAME)
+ * Permite ao aluno treinar conjugação em 4 tempos (Présent, Passé Composé, Imparfait, Futur)
+ * com áudio neural nativo normal/lento, quiz de fixação, reconstrução de frases e treino oral.
+ */
+
 import { naturalVoice } from './audio.js';
+import { speechEngine } from './speech.js';
 import { masteryEngine } from './progress.js';
 
 export class FrenchMiniGame {
@@ -15,6 +22,7 @@ export class FrenchMiniGame {
     this.assembledWords = [];
     this.originalWords = [];
     this.onCompleteCallback = null;
+    this.isRecordingSpeechDrill = false;
   }
 
   init() {
@@ -35,6 +43,7 @@ export class FrenchMiniGame {
         <div class="minigame-tabs">
           <button class="minigame-tab active" id="tab-verbs">⚡ 4 Tempos Verbais</button>
           <button class="minigame-tab" id="tab-puzzle">🧩 Remonte a Frase</button>
+          <button class="minigame-tab" id="tab-speech">🎙️ Treino Oral</button>
         </div>
 
         <div class="minigame-body">
@@ -46,10 +55,10 @@ export class FrenchMiniGame {
               <p class="verb-meaning" id="minigame-verb-meaning">Pegar / Tomar / Compreender</p>
             </div>
 
-            <p class="section-instruction">Toque para ouvir e repita em voz alta:</p>
+            <p class="section-instruction">Toque para ouvir em velocidade normal ou lenta e repita:</p>
 
             <div class="tenses-grid" id="tenses-grid">
-              <!-- Gerado dinamicamente -->
+              <!-- Gerado dinamicamente com botões 🔊 e 🐢 -->
             </div>
 
             <div class="verb-quiz-card" id="verb-quiz-card">
@@ -79,6 +88,41 @@ export class FrenchMiniGame {
 
             <div class="puzzle-feedback" id="puzzle-feedback" style="display: none;"></div>
           </div>
+
+          <!-- PAINEL 3: TREINO ORAL & REPETIÇÃO -->
+          <div class="minigame-pane" id="pane-speech" style="display: none;">
+            <div class="speech-drill-container">
+              <div class="verb-hero-box">
+                <span class="verb-tag">PRÁTICA ORAL AO VIVO</span>
+                <p class="section-instruction">Ouça a frase modelo e treine sua pronúncia com validação instantânea:</p>
+              </div>
+
+              <div class="speech-phrase-card">
+                <span class="puzzle-tag">FALA DA CENA</span>
+                <p class="speech-phrase-target" id="minigame-speech-fr">...</p>
+                <p class="speech-phrase-ipa" id="minigame-speech-ipa">[ipa]</p>
+                <p class="speech-phrase-pt" id="minigame-speech-pt">Tradução</p>
+
+                <div class="speech-drill-actions">
+                  <button class="btn-speech-audio" id="btn-minigame-speech-normal">
+                    <span>🔊 Ouvir Normal (1.0x)</span>
+                  </button>
+                  <button class="btn-speech-audio slow" id="btn-minigame-speech-slow">
+                    <span>🐢 Ouvir Lento (0.75x)</span>
+                  </button>
+                </div>
+
+                <div style="margin-top: 10px;">
+                  <button class="btn-speech-mic-record" id="btn-minigame-speech-mic">
+                    <span id="minigame-mic-icon">🎙️</span>
+                    <span id="minigame-mic-label">Gravar e Validar Fala</span>
+                  </button>
+                </div>
+
+                <div class="speech-drill-feedback" id="minigame-speech-feedback" style="display: none;"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <footer class="minigame-footer">
@@ -99,8 +143,10 @@ export class FrenchMiniGame {
     const btnContinue = document.getElementById('btn-minigame-continue');
     const tabVerbs = document.getElementById('tab-verbs');
     const tabPuzzle = document.getElementById('tab-puzzle');
+    const tabSpeech = document.getElementById('tab-speech');
     const paneVerbs = document.getElementById('pane-verbs');
     const panePuzzle = document.getElementById('pane-puzzle');
+    const paneSpeech = document.getElementById('pane-speech');
 
     if (btnClose) btnClose.onclick = () => this.hide();
     if (btnContinue) {
@@ -110,18 +156,72 @@ export class FrenchMiniGame {
       };
     }
 
-    if (tabVerbs && tabPuzzle) {
-      tabVerbs.onclick = () => {
-        tabVerbs.classList.add('active');
-        tabPuzzle.classList.remove('active');
-        paneVerbs.style.display = 'block';
-        panePuzzle.style.display = 'none';
+    const switchTab = (activeTab, activePane) => {
+      [tabVerbs, tabPuzzle, tabSpeech].forEach(t => t && t.classList.remove('active'));
+      [paneVerbs, panePuzzle, paneSpeech].forEach(p => p && (p.style.display = 'none'));
+      if (activeTab) activeTab.classList.add('active');
+      if (activePane) activePane.style.display = 'block';
+    };
+
+    if (tabVerbs) tabVerbs.onclick = () => switchTab(tabVerbs, paneVerbs);
+    if (tabPuzzle) tabPuzzle.onclick = () => switchTab(tabPuzzle, panePuzzle);
+    if (tabSpeech) tabSpeech.onclick = () => switchTab(tabSpeech, paneSpeech);
+
+    // Controles do Treino Oral (Aba 3)
+    const btnSpeechNormal = document.getElementById('btn-minigame-speech-normal');
+    const btnSpeechSlow = document.getElementById('btn-minigame-speech-slow');
+    const btnSpeechMic = document.getElementById('btn-minigame-speech-mic');
+    const micIcon = document.getElementById('minigame-mic-icon');
+    const micLabel = document.getElementById('minigame-mic-label');
+    const speechFeedback = document.getElementById('minigame-speech-feedback');
+
+    if (btnSpeechNormal) {
+      btnSpeechNormal.onclick = () => {
+        const text = document.getElementById('minigame-speech-fr').textContent;
+        naturalVoice.speak(text, 'PEDRO', 1.0);
       };
-      tabPuzzle.onclick = () => {
-        tabPuzzle.classList.add('active');
-        tabVerbs.classList.remove('active');
-        paneVerbs.style.display = 'none';
-        panePuzzle.style.display = 'block';
+    }
+
+    if (btnSpeechSlow) {
+      btnSpeechSlow.onclick = () => {
+        const text = document.getElementById('minigame-speech-fr').textContent;
+        naturalVoice.speak(text, 'PEDRO', 0.75);
+      };
+    }
+
+    if (btnSpeechMic) {
+      btnSpeechMic.onclick = async () => {
+        const targetText = document.getElementById('minigame-speech-fr').textContent;
+        if (!targetText) return;
+
+        if (this.isRecordingSpeechDrill) {
+          this.isRecordingSpeechDrill = false;
+          btnSpeechMic.classList.remove('recording');
+          if (micIcon) micIcon.textContent = '🎙️';
+          if (micLabel) micLabel.textContent = 'Gravar e Validar Fala';
+
+          const res = await speechEngine.stopRecording(targetText);
+          if (res && res.evaluation && speechFeedback) {
+            speechFeedback.style.display = 'block';
+            if (res.evaluation.score >= 70) {
+              speechFeedback.className = 'speech-drill-feedback success';
+              speechFeedback.innerHTML = `🎉 <strong>MUITO BEM! Pontuação: ${res.evaluation.score}%</strong> (${res.evaluation.gradeTitle})<br>${res.evaluation.commentary}`;
+              if (this.currentChapterId) {
+                masteryEngine.recordAudioScore(this.currentChapterId, res.evaluation.score);
+              }
+            } else {
+              speechFeedback.className = 'speech-drill-feedback retry';
+              speechFeedback.innerHTML = `⚡ <strong>Pontuação: ${res.evaluation.score}%</strong>. Tente novamente articulando com calma cada palavra.`;
+            }
+          }
+        } else {
+          this.isRecordingSpeechDrill = true;
+          btnSpeechMic.classList.add('recording');
+          if (micIcon) micIcon.textContent = '⏹️';
+          if (micLabel) micLabel.textContent = 'Parar e Avaliar';
+          if (speechFeedback) speechFeedback.style.display = 'none';
+          await speechEngine.startRecording();
+        }
       };
     }
   }
@@ -133,7 +233,24 @@ export class FrenchMiniGame {
     this.onCompleteCallback = onComplete;
     this.renderVerbs(challengeData.verb_challenge);
     this.renderPuzzle(challengeData.sentence_puzzle || challengeData.dialogue_fr);
+    this.renderSpeechDrill(challengeData);
     this.container.style.display = 'flex';
+  }
+
+  renderSpeechDrill(data) {
+    const frEl = document.getElementById('minigame-speech-fr');
+    const ipaEl = document.getElementById('minigame-speech-ipa');
+    const ptEl = document.getElementById('minigame-speech-pt');
+    const feedback = document.getElementById('minigame-speech-feedback');
+
+    const frText = data.dialogue_fr || (data.sentence_puzzle ? data.sentence_puzzle.sentence_fr : '');
+    const ptText = data.dialogue_pt || '';
+    const ipaText = data.ipa || '';
+
+    if (frEl) frEl.textContent = frText;
+    if (ipaEl) ipaEl.textContent = ipaText;
+    if (ptEl) ptEl.textContent = ptText;
+    if (feedback) feedback.style.display = 'none';
   }
 
   hide() {
@@ -171,20 +288,34 @@ export class FrenchMiniGame {
             <span class="tense-fr">${t.data.fr}</span>
             <span class="tense-pt">${t.data.pt}</span>
           </div>
-          <button class="btn-tense-audio" title="Ouvir pronúncia neural">
-            <span>🔊</span>
-          </button>
+          <div class="tense-actions">
+            <button class="btn-tense-audio" title="Ouvir normal (1.0x)">
+              <span>🔊</span>
+            </button>
+            <button class="btn-tense-audio slow" title="Ouvir lento (0.75x)">
+              <span>🐢</span>
+            </button>
+          </div>
         `;
 
-        const btnAudio = row.querySelector('.btn-tense-audio');
-        btnAudio.onclick = (e) => {
+        const btnAudioNormal = row.querySelector('.btn-tense-audio:not(.slow)');
+        const btnAudioSlow = row.querySelector('.btn-tense-audio.slow');
+
+        btnAudioNormal.onclick = (e) => {
           e.stopPropagation();
           row.classList.add('playing');
-          naturalVoice.speak(t.data.fr, 'PEDRO');
+          naturalVoice.speak(t.data.fr, 'PEDRO', 1.0);
           setTimeout(() => row.classList.remove('playing'), 1500);
         };
 
-        row.onclick = () => btnAudio.click();
+        btnAudioSlow.onclick = (e) => {
+          e.stopPropagation();
+          row.classList.add('playing');
+          naturalVoice.speakSlow(t.data.fr, 'PEDRO');
+          setTimeout(() => row.classList.remove('playing'), 1800);
+        };
+
+        row.onclick = () => btnAudioNormal.click();
         gridEl.appendChild(row);
       });
     }

@@ -17,6 +17,12 @@ class MassiveComicApp {
     this.showTranslation = true;
     this.lastAudioUrl = null;
     this.isDossierReading = false;
+    this.dossierMode = 'all'; // 'all', 'selected', 'off'
+    this.dossierReadingTimeout = null;
+    this.currentDossierLines = [];
+    this.retryWordsQueue = [];
+    this.currentDrillIndex = 0;
+    this.currentDrillSourceEl = null;
     this.preloadedImages = new Set();
   }
 
@@ -28,6 +34,7 @@ class MassiveComicApp {
     this.setupStoryNavigation();
     this.setupTikTokActions();
     this.setupDossierDrawer();
+    this.setupSingleWordDrill();
   }
 
   preloadCoreImages() {
@@ -678,7 +685,7 @@ class MassiveComicApp {
     scoreBadge.innerHTML = `⭐ ${evalData.score}% • ${evalData.gradeTitle}`;
     scoreBadge.style.display = 'inline-flex';
 
-    // 3. Exibe comentário compacto de 1 linha logo abaixo do texto
+    // 3. Exibe comentário compacto com botão interativo para treinar palavras com erro
     let commentBox = document.getElementById('bubble-speech-comment');
     if (!commentBox) {
       commentBox = document.createElement('div');
@@ -689,8 +696,50 @@ class MassiveComicApp {
       }
     }
     commentBox.className = 'bubble-feedback-commentary';
-    commentBox.innerHTML = `🎯 <strong>Feedback:</strong> ${evalData.commentary}`;
+
+    // Monta fila de palavras que precisam de repetição/treino individual
+    const retryElements = document.querySelectorAll('#story-fr-text .story-word.word-retry');
+    this.retryWordsQueue = [];
+    retryElements.forEach(el => {
+      const wText = el.textContent.replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
+      if (wText) {
+        this.retryWordsQueue.push({
+          word: wText,
+          ipa: `[${wText.toLowerCase()}]`,
+          meaning: 'Palavra da cena',
+          sourceEl: el
+        });
+
+        // Torna a palavra vermelha clicável individualmente para abrir o treino
+        el.title = 'Toque para treinar esta palavra individualmente';
+        el.onclick = (e) => {
+          e.stopPropagation();
+          this.openSingleWordDrill(wText, `[${wText.toLowerCase()}]`, 'Treino focado de pronúncia', el);
+        };
+      }
+    });
+
+    let drillButtonHtml = '';
+    if (this.retryWordsQueue.length > 0) {
+      drillButtonHtml = ` <button id="btn-bubble-drill-action" style="margin-left: 8px; background: var(--story-yellow); color: #000; border: none; border-radius: 4px; padding: 2px 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer; box-shadow: 1px 1px 0 #000;">🎯 Treinar Palavras (${this.retryWordsQueue.length})</button>`;
+    }
+
+    commentBox.innerHTML = `🎯 <strong>Feedback:</strong> ${evalData.commentary}${drillButtonHtml}`;
     commentBox.style.display = 'block';
+
+    const btnDrill = document.getElementById('btn-bubble-drill-action');
+    if (btnDrill && this.retryWordsQueue.length > 0) {
+      btnDrill.onclick = (e) => {
+        e.stopPropagation();
+        this.currentDrillIndex = 0;
+        this.openSingleWordDrill(
+          this.retryWordsQueue[0].word,
+          this.retryWordsQueue[0].ipa,
+          this.retryWordsQueue[0].meaning,
+          this.retryWordsQueue[0].sourceEl
+        );
+      };
+    }
 
     // 4. Libera botão "Minha Voz" no dock lateral
     const btnPlayback = document.getElementById('btn-tiktok-playback');
@@ -699,43 +748,177 @@ class MassiveComicApp {
     }
   }
 
+  setupSingleWordDrill() {
+    const modal = document.getElementById('single-word-drill-modal');
+    const btnClose = document.getElementById('btn-close-single-drill');
+    const btnDone = document.getElementById('btn-drill-done');
+    const btnNext = document.getElementById('btn-drill-next');
+    const btnAudioNormal = document.getElementById('btn-drill-audio-normal');
+    const btnAudioSlow = document.getElementById('btn-drill-audio-slow');
+    const btnRecord = document.getElementById('btn-drill-record');
+    const recordIcon = document.getElementById('drill-record-icon');
+    const recordLabel = document.getElementById('drill-record-label');
+    const statusEl = document.getElementById('drill-status');
+    const feedbackBox = document.getElementById('drill-feedback-box');
+    const feedbackText = document.getElementById('drill-feedback-text');
+
+    if (btnClose) btnClose.onclick = () => this.closeSingleWordDrill();
+    if (btnDone) btnDone.onclick = () => this.closeSingleWordDrill();
+
+    if (btnAudioNormal) {
+      btnAudioNormal.onclick = () => {
+        const word = document.getElementById('drill-word-target').textContent;
+        naturalVoice.speakWord(word, 'PEDRO', 1.0);
+      };
+    }
+
+    if (btnAudioSlow) {
+      btnAudioSlow.onclick = () => {
+        const word = document.getElementById('drill-word-target').textContent;
+        naturalVoice.speakWord(word, 'PEDRO', 0.75);
+      };
+    }
+
+    if (btnNext) {
+      btnNext.onclick = () => {
+        if (this.retryWordsQueue && this.retryWordsQueue.length > this.currentDrillIndex + 1) {
+          this.currentDrillIndex++;
+          this.displayDrillWord(this.retryWordsQueue[this.currentDrillIndex]);
+        }
+      };
+    }
+
+    let isRecordingDrill = false;
+    if (btnRecord) {
+      btnRecord.onclick = async () => {
+        const targetWord = document.getElementById('drill-word-target').textContent;
+        if (!targetWord) return;
+
+        if (isRecordingDrill) {
+          isRecordingDrill = false;
+          btnRecord.classList.remove('recording');
+          if (recordIcon) recordIcon.textContent = '🎙️';
+          if (recordLabel) recordLabel.textContent = 'Gravar e Validar Pronúncia';
+          if (statusEl) statusEl.textContent = 'Avaliando pronúncia...';
+
+          const res = await speechEngine.stopRecording(targetWord);
+          if (res && res.evaluation && feedbackBox && feedbackText) {
+            feedbackBox.style.display = 'block';
+            const clean = (t) => (t || '').toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
+            const targetClean = clean(targetWord);
+            const recognized = clean(res.recognized);
+            const isMatch = recognized.includes(targetClean) || targetClean.includes(recognized) || res.evaluation.score >= 70;
+
+            if (isMatch) {
+              feedbackBox.className = 'drill-feedback-box correct';
+              feedbackText.innerHTML = `✨ <strong>PARABÉNS! PRONÚNCIA EXATA!</strong><br>Palavra dominada com sucesso!`;
+              if (statusEl) statusEl.textContent = 'Excelente! Pronúncia qualificada com sucesso.';
+
+              if (this.currentDrillSourceEl) {
+                this.currentDrillSourceEl.classList.remove('word-retry');
+                this.currentDrillSourceEl.classList.add('word-correct');
+              }
+
+              if (btnNext && this.retryWordsQueue && this.currentDrillIndex < this.retryWordsQueue.length - 1) {
+                btnNext.style.display = 'block';
+              }
+            } else {
+              feedbackBox.className = 'drill-feedback-box retry';
+              feedbackText.innerHTML = `⚠️ <strong>Você disse: "${res.recognized || '...'}"</strong><br>Tente novamente ouvindo o modo lento 🐢.`;
+              if (statusEl) statusEl.textContent = 'Toque em "Ouvir Lento (0.75x)" e depois grave novamente.';
+            }
+          }
+        } else {
+          isRecordingDrill = true;
+          btnRecord.classList.add('recording');
+          if (recordIcon) recordIcon.textContent = '⏹️';
+          if (recordLabel) recordLabel.textContent = 'Parar Gravação';
+          if (statusEl) statusEl.textContent = 'Fale a palavra claramente agora...';
+          if (feedbackBox) feedbackBox.style.display = 'none';
+          await speechEngine.startRecording();
+        }
+      };
+    }
+  }
+
+  openSingleWordDrill(word, ipa = '', meaning = '', sourceEl = null) {
+    this.currentDrillSourceEl = sourceEl;
+    this.displayDrillWord({ word, ipa, meaning, sourceEl });
+    const modal = document.getElementById('single-word-drill-modal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  displayDrillWord(item) {
+    if (!item) return;
+    const wordTarget = document.getElementById('drill-word-target');
+    const wordIpa = document.getElementById('drill-word-ipa');
+    const wordMeaning = document.getElementById('drill-word-meaning');
+    const feedbackBox = document.getElementById('drill-feedback-box');
+    const statusEl = document.getElementById('drill-status');
+    const btnNext = document.getElementById('btn-drill-next');
+
+    if (wordTarget) wordTarget.textContent = item.word;
+    if (wordIpa) wordIpa.textContent = item.ipa || '[pronúncia padrão]';
+    if (wordMeaning) wordMeaning.textContent = item.meaning || 'Toque para praticar';
+    if (feedbackBox) feedbackBox.style.display = 'none';
+    if (statusEl) statusEl.textContent = 'Pressione o microfone e fale a palavra em voz alta';
+    if (btnNext) {
+      btnNext.style.display = (this.retryWordsQueue && this.currentDrillIndex < this.retryWordsQueue.length - 1) ? 'block' : 'none';
+    }
+
+    this.currentDrillSourceEl = item.sourceEl || this.currentDrillSourceEl;
+    naturalVoice.speakWord(item.word, 'PEDRO');
+  }
+
+  closeSingleWordDrill() {
+    naturalVoice.stop();
+    const modal = document.getElementById('single-word-drill-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
   setupDossierDrawer() {
     const backdrop = document.getElementById('dossier-drawer-backdrop');
     const btnClose = document.getElementById('btn-close-dossier');
     const btnReadAi = document.getElementById('btn-read-dossier-ai');
-    const aiText = document.getElementById('ai-speak-text');
+
+    // Modos de Tradução: Linha a Linha (all), Apenas Selecionado (selected), Ocultar (off)
+    const btnModeAll = document.getElementById('btn-mode-all');
+    const btnModeSelected = document.getElementById('btn-mode-selected');
+    const btnModeOff = document.getElementById('btn-mode-off');
+    const linesContainer = document.getElementById('dossier-lines-container');
+
+    const setMode = (mode) => {
+      this.dossierMode = mode;
+      [btnModeAll, btnModeSelected, btnModeOff].forEach(b => b && b.classList.remove('active'));
+      if (mode === 'all' && btnModeAll) btnModeAll.classList.add('active');
+      if (mode === 'selected' && btnModeSelected) btnModeSelected.classList.add('active');
+      if (mode === 'off' && btnModeOff) btnModeOff.classList.add('active');
+
+      if (linesContainer) {
+        linesContainer.className = `dossier-lines-container mode-${mode}`;
+      }
+    };
+
+    if (btnModeAll) btnModeAll.onclick = () => setMode('all');
+    if (btnModeSelected) btnModeSelected.onclick = () => setMode('selected');
+    if (btnModeOff) btnModeOff.onclick = () => setMode('off');
 
     if (btnClose) {
-      btnClose.onclick = () => {
-        this.closeDossierDrawer();
-      };
+      btnClose.onclick = () => this.closeDossierDrawer();
     }
 
     if (backdrop) {
       backdrop.onclick = (e) => {
-        if (e.target === backdrop) {
-          this.closeDossierDrawer();
-        }
+        if (e.target === backdrop) this.closeDossierDrawer();
       };
     }
 
     if (btnReadAi) {
       btnReadAi.onclick = () => {
-        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
-        if (!sc || !sc.dossier) return;
-
         if (this.isDossierReading) {
-          naturalVoice.stop();
-          this.isDossierReading = false;
-          btnReadAi.classList.remove('reading');
-          aiText.textContent = "ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)";
-          ambientEngine.unduck();
+          this.stopDossierReading();
         } else {
-          this.isDossierReading = true;
-          btnReadAi.classList.add('reading');
-          aiText.textContent = "⏹️ ARRÊTER LA LECTURE PAR L'IA";
-          ambientEngine.duck();
-          naturalVoice.speak(sc.dossier.article_fr, 'NARRATEUR');
+          this.startDossierReading();
         }
       };
     }
@@ -745,26 +928,147 @@ class MassiveComicApp {
     const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
     if (!sc || !sc.dossier) return;
 
-    document.getElementById('drawer-badge').textContent = sc.dossier.badge || 'DOSSIER HISTORIQUE';
-    document.getElementById('drawer-title-fr').textContent = sc.dossier.title_fr;
-    document.getElementById('drawer-title-pt').textContent = sc.dossier.title_pt;
-    document.getElementById('drawer-article-fr').textContent = sc.dossier.article_fr;
-    document.getElementById('drawer-article-pt').textContent = sc.dossier.article_pt;
+    const dossier = sc.dossier;
+    const badgeEl = document.getElementById('drawer-badge');
+    const sourceEl = document.getElementById('drawer-source-tag');
+    const titleFrEl = document.getElementById('drawer-title-fr');
+    const titlePtEl = document.getElementById('drawer-title-pt');
+    const container = document.getElementById('dossier-lines-container');
 
-    const btnReadAi = document.getElementById('btn-read-dossier-ai');
-    const aiText = document.getElementById('ai-speak-text');
-    this.isDossierReading = false;
-    if (btnReadAi) btnReadAi.classList.remove('reading');
-    if (aiText) aiText.textContent = "ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)";
+    if (badgeEl) badgeEl.textContent = dossier.badge || '📰 LE MONDE • ACTUALITÉ 2026';
+    if (sourceEl) sourceEl.textContent = dossier.source || 'RFI / FRANCE 24';
+    if (titleFrEl) titleFrEl.textContent = dossier.title_fr;
+    if (titlePtEl) titlePtEl.textContent = dossier.title_pt;
+
+    this.stopDossierReading();
+
+    // Divide em linhas interlineares reais (se dossier.lines não estiver definido, divide o artigo por pontuação)
+    let lines = [];
+    if (dossier.lines && Array.isArray(dossier.lines) && dossier.lines.length > 0) {
+      lines = dossier.lines;
+    } else {
+      const frSentences = (dossier.article_fr || '').split(/(?<=[.?!:])\s+/).filter(Boolean);
+      const ptSentences = (dossier.article_pt || '').split(/(?<=[.?!:])\s+/).filter(Boolean);
+      lines = frSentences.map((fr, idx) => ({
+        fr: fr.trim(),
+        pt: (ptSentences[idx] || '').trim()
+      }));
+    }
+    this.currentDossierLines = lines;
+
+    if (container) {
+      container.className = `dossier-lines-container mode-${this.dossierMode || 'all'}`;
+      container.innerHTML = '';
+
+      lines.forEach((line, idx) => {
+        const card = document.createElement('div');
+        card.className = 'dossier-line-card';
+        card.id = `dossier-line-${idx}`;
+
+        // Palavras francesas clicáveis individualmente para ouvir pronúncia
+        const wordsHtml = line.fr.split(/\s+/).map(w => `<span class="news-word">${w}</span>`).join(' ');
+
+        card.innerHTML = `
+          <div class="news-line-top-row">
+            <p class="news-line-fr">${wordsHtml}</p>
+            <button class="news-speak-btn" title="Ouvir esta frase com IA">🔊</button>
+          </div>
+          <p class="news-line-pt">${line.pt || ''}</p>
+        `;
+
+        // Clique em palavras individuais na notícia
+        const wordSpans = card.querySelectorAll('.news-word');
+        wordSpans.forEach(ws => {
+          ws.onclick = (e) => {
+            e.stopPropagation();
+            naturalVoice.speakWord(ws.textContent, 'PEDRO');
+          };
+        });
+
+        // Clique no botão de áudio da frase
+        const btnSpeak = card.querySelector('.news-speak-btn');
+        if (btnSpeak) {
+          btnSpeak.onclick = (e) => {
+            e.stopPropagation();
+            naturalVoice.speak(line.fr, 'NARRATEUR');
+          };
+        }
+
+        // Clique no card da linha: seleciona para revelar tradução se no modo 'selected'
+        card.onclick = () => {
+          const allCards = container.querySelectorAll('.dossier-line-card');
+          const isSelected = card.classList.contains('selected');
+          allCards.forEach(c => c.classList.remove('selected'));
+          if (!isSelected) {
+            card.classList.add('selected');
+          }
+        };
+
+        container.appendChild(card);
+      });
+    }
 
     const backdrop = document.getElementById('dossier-drawer-backdrop');
     if (backdrop) backdrop.style.display = 'flex';
   }
 
-  closeDossierDrawer() {
-    naturalVoice.stop();
+  startDossierReading() {
+    if (!this.currentDossierLines || this.currentDossierLines.length === 0) return;
+    this.isDossierReading = true;
+    const btnReadAi = document.getElementById('btn-read-dossier-ai');
+    const aiText = document.getElementById('ai-speak-text');
+    if (btnReadAi) btnReadAi.classList.add('reading');
+    if (aiText) aiText.textContent = "⏹️ PARAR LEITURA IA";
+
+    this.readDossierLineStep(0);
+  }
+
+  stopDossierReading() {
     this.isDossierReading = false;
+    naturalVoice.stop();
     ambientEngine.unduck();
+    if (this.dossierReadingTimeout) {
+      clearTimeout(this.dossierReadingTimeout);
+      this.dossierReadingTimeout = null;
+    }
+    const btnReadAi = document.getElementById('btn-read-dossier-ai');
+    const aiText = document.getElementById('ai-speak-text');
+    if (btnReadAi) btnReadAi.classList.remove('reading');
+    if (aiText) aiText.textContent = "OUVIR IA";
+
+    const allCards = document.querySelectorAll('.dossier-line-card');
+    allCards.forEach(c => c.classList.remove('line-active'));
+  }
+
+  readDossierLineStep(index) {
+    if (!this.isDossierReading) return;
+    if (!this.currentDossierLines || index >= this.currentDossierLines.length) {
+      this.stopDossierReading();
+      return;
+    }
+
+    const allCards = document.querySelectorAll('.dossier-line-card');
+    allCards.forEach(c => c.classList.remove('line-active'));
+
+    const currentCard = document.getElementById(`dossier-line-${index}`);
+    if (currentCard) {
+      currentCard.classList.add('line-active');
+      currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    const line = this.currentDossierLines[index];
+    naturalVoice.speak(line.fr, 'NARRATEUR');
+
+    const duration = Math.max(2500, (line.fr.length * 75) + 1200);
+    this.dossierReadingTimeout = setTimeout(() => {
+      if (this.isDossierReading) {
+        this.readDossierLineStep(index + 1);
+      }
+    }, duration);
+  }
+
+  closeDossierDrawer() {
+    this.stopDossierReading();
     const backdrop = document.getElementById('dossier-drawer-backdrop');
     if (backdrop) backdrop.style.display = 'none';
   }
@@ -874,13 +1178,10 @@ class MassiveComicApp {
         frSpans.forEach(s => s.classList.remove('active-sync'));
         ptSpans.forEach(s => s.classList.remove('active-sync'));
 
-        frSpan.classList.add('active-sync');
-
-        // Encontra a palavra correspondente real em português
-        const targetPtIndices = lexicalAligner.findMatchingPtIndices(frSpan.textContent, frIdx, frWords, ptWords);
-        targetPtIndices.forEach(idx => {
-          if (ptSpans[idx]) ptSpans[idx].classList.add('active-sync');
-        });
+        // Sincronização lexical perfeita bidirecional (trata locuções compostas e contrações)
+        const sync = lexicalAligner.syncSelection('fr', frIdx, frWords, ptWords);
+        sync.frIndices.forEach(fi => frSpans[fi] && frSpans[fi].classList.add('active-sync'));
+        sync.ptIndices.forEach(pi => ptSpans[pi] && ptSpans[pi].classList.add('active-sync'));
 
         // Pronuncia a palavra em francês com voz neural de estúdio
         naturalVoice.speakWord(frSpan.textContent, scene.speaker);
@@ -895,20 +1196,13 @@ class MassiveComicApp {
         frSpans.forEach(s => s.classList.remove('active-sync'));
         ptSpans.forEach(s => s.classList.remove('active-sync'));
 
-        ptSpan.classList.add('active-sync');
+        // Sincronização lexical perfeita bidirecional
+        const sync = lexicalAligner.syncSelection('pt', ptIdx, frWords, ptWords);
+        sync.frIndices.forEach(fi => frSpans[fi] && frSpans[fi].classList.add('active-sync'));
+        sync.ptIndices.forEach(pi => ptSpans[pi] && ptSpans[pi].classList.add('active-sync'));
 
-        // Encontra a palavra correspondente real em francês
-        const targetFrIndices = lexicalAligner.findMatchingFrIndices(ptSpan.textContent, ptIdx, ptWords, frWords);
-        let spokenWord = '';
-        targetFrIndices.forEach(idx => {
-          if (frSpans[idx]) {
-            frSpans[idx].classList.add('active-sync');
-            spokenWord = frSpans[idx].textContent;
-          }
-        });
-
-        if (spokenWord) {
-          naturalVoice.speakWord(spokenWord, scene.speaker);
+        if (sync.frIndices.length > 0 && frSpans[sync.frIndices[0]]) {
+          naturalVoice.speakWord(frSpans[sync.frIndices[0]].textContent, scene.speaker);
         }
       };
     });

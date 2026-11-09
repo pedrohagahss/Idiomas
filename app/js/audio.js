@@ -39,7 +39,7 @@ export class NaturalVoiceEngine {
     ambientEngine.unduck();
   }
 
-  async speak(text, character = 'PEDRO') {
+  async speak(text, character = 'PEDRO', rate = 1.0) {
     if (!text) return;
     this.stop();
 
@@ -54,6 +54,9 @@ export class NaturalVoiceEngine {
       const audioUrl = `/api/tts?text=${encodeURIComponent(cleanText)}&speaker=${encodeURIComponent(character)}`;
       const audio = new Audio(audioUrl);
       this.currentAudio = audio;
+      if (rate && rate !== 1.0) {
+        audio.playbackRate = rate;
+      }
 
       audio.onended = () => {
         ambientEngine.unduck();
@@ -61,7 +64,7 @@ export class NaturalVoiceEngine {
       audio.onerror = () => {
         console.warn('Erro na reprodução neural, caindo para Web Speech API...');
         ambientEngine.unduck();
-        this.speakWithWebSpeech(cleanText, character);
+        this.speakWithWebSpeech(cleanText, character, 0.88 * rate);
       };
       audio.onpause = () => {
         ambientEngine.unduck();
@@ -77,10 +80,14 @@ export class NaturalVoiceEngine {
     }
 
     // Fallback: Web Speech API caso offline
-    this.speakWithWebSpeech(cleanText, character);
+    this.speakWithWebSpeech(cleanText, character, 0.88 * rate);
   }
 
-  async speakWord(word, character = 'PEDRO') {
+  speakSlow(text, character = 'PEDRO') {
+    return this.speak(text, character, 0.75);
+  }
+
+  async speakWord(word, character = 'PEDRO', rate = 1.0) {
     if (!word) return;
     this.stop();
 
@@ -93,13 +100,16 @@ export class NaturalVoiceEngine {
       const audioUrl = `/api/tts?text=${encodeURIComponent(cleanWord)}&speaker=${encodeURIComponent(character)}`;
       const audio = new Audio(audioUrl);
       this.currentAudio = audio;
+      if (rate && rate !== 1.0) {
+        audio.playbackRate = rate;
+      }
 
       audio.onended = () => {
         ambientEngine.unduck();
       };
       audio.onerror = () => {
         ambientEngine.unduck();
-        this.speakWithWebSpeech(cleanWord, character, 0.82);
+        this.speakWithWebSpeech(cleanWord, character, 0.82 * rate);
       };
       audio.onpause = () => {
         ambientEngine.unduck();
@@ -112,7 +122,7 @@ export class NaturalVoiceEngine {
       }
     } catch (_) {}
 
-    this.speakWithWebSpeech(cleanWord, character, 0.82);
+    this.speakWithWebSpeech(cleanWord, character, 0.82 * rate);
   }
 
   speakWithWebSpeech(text, character, customRate = null) {

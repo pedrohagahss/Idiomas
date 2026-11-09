@@ -361,42 +361,106 @@
   </div>
 
   <!-- ====================================================================
-       3. DRAWER / MODAL DESLIZANTE DE NOTÍCIA & DOSSIER (ESTILO TIKTOK SHEET)
+       3. TELA DE NOTÍCIA REAL & DOSSIER JORNALÍSTICO (FULLSCREEN INTERLINEAR)
        ==================================================================== -->
   <div class="dossier-drawer-backdrop" id="dossier-drawer-backdrop" style="display: none;">
     <div class="dossier-drawer" id="dossier-drawer">
       
-      <div class="drawer-drag-bar"></div>
+      <!-- Top Bar Fullscreen -->
+      <header class="dossier-fullscreen-header">
+        <button class="dossier-back-btn" id="btn-close-dossier" title="Voltar para a História">
+          <span class="back-icon">←</span>
+          <span>VOLTAR AO STORY</span>
+        </button>
+        <div class="dossier-header-center">
+          <span class="drawer-badge" id="drawer-badge">📰 LE MONDE • ACTUALITÉ 2026</span>
+          <span class="dossier-source-tag" id="drawer-source-tag">RFI / FRANCE 24</span>
+        </div>
+        <button class="dossier-ai-audio-pill" id="btn-read-dossier-ai" title="Ouvir matéria lida por IA">
+          <span class="ai-speak-icon">▶</span>
+          <span id="ai-speak-text">OUVIR IA</span>
+        </button>
+      </header>
 
-      <div class="drawer-header">
-        <div class="drawer-badge" id="drawer-badge">ACTUALITÉ TECH 2026</div>
-        <button class="drawer-close-btn" id="btn-close-dossier" title="Fechar notícia">✕</button>
+      <!-- Barra de Controle de Tradução Linha a Linha -->
+      <div class="dossier-toolbar">
+        <div class="dossier-mode-toggles">
+          <span class="toolbar-label">Tradução:</span>
+          <button class="dossier-toggle-btn active" id="btn-mode-all" data-mode="all" title="Exibe tradução em todas as linhas">
+            👁️ Linha a Linha (ON)
+          </button>
+          <button class="dossier-toggle-btn" id="btn-mode-selected" data-mode="selected" title="Exibe tradução somente na linha ou palavra selecionada">
+            👆 Apenas Selecionado
+          </button>
+          <button class="dossier-toggle-btn" id="btn-mode-off" data-mode="off" title="Oculta traduções (modo 100% francês)">
+            🚫 Ocultar Tradução
+          </button>
+        </div>
+        <div class="dossier-hint-pill">Toque nas palavras para ouvir 🎙️</div>
       </div>
 
-      <div class="drawer-scrollable-body">
-        <h3 class="drawer-title-fr" id="drawer-title-fr">Titre de l'Actualité</h3>
-        <h4 class="drawer-title-pt" id="drawer-title-pt">Título em Português</h4>
-
-        <!-- Botão de Leitura de Texto Completo por IA -->
-        <div class="drawer-ai-voice-card">
-          <button class="btn-read-dossier-ai" id="btn-read-dossier-ai">
-            <span class="ai-speak-icon">▶</span>
-            <span id="ai-speak-text">ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)</span>
-          </button>
-          <span class="ai-voice-label">🎙️ Voz Neural de Estúdio • Leitura fluida e pausada</span>
+      <!-- Corpo da Matéria Jornalística -->
+      <div class="drawer-scrollable-body" id="dossier-body">
+        <div class="dossier-headline-block">
+          <h2 class="drawer-title-fr" id="drawer-title-fr">Titre de l'Actualité</h2>
+          <h3 class="drawer-title-pt" id="drawer-title-pt">Título em Português</h3>
         </div>
 
-        <div class="drawer-section-label">🇫🇷 TEXTE INTÉGRAL EN FRANÇAIS :</div>
-        <p class="drawer-article-fr" id="drawer-article-fr">
-          <!-- Texto corrido em francês -->
-        </p>
-
-        <div class="drawer-section-label">🇧🇷 TRADUÇÃO CONTEXTUAL EM PORTUGUÊS :</div>
-        <p class="drawer-article-pt" id="drawer-article-pt">
-          <!-- Tradução contextual -->
-        </p>
+        <!-- Linhas Interlineares da Matéria Jornalística Real -->
+        <div class="dossier-lines-container" id="dossier-lines-container">
+          <!-- Gerado dinamicamente via JS: cada frase em francês com tradução logo abaixo -->
+        </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL DE TREINO INDIVIDUAL DE PALAVRA ERRADA / FONÉTICA
+       ==================================================================== -->
+  <div class="single-word-drill-backdrop" id="single-word-drill-modal" style="display: none;">
+    <div class="single-word-drill-card">
+      <header class="drill-header">
+        <div class="drill-badge">🎯 TREINO INDIVIDUAL DE PRONÚNCIA</div>
+        <button class="drill-close-btn" id="btn-close-single-drill" title="Fechar Treino">✕</button>
+      </header>
+      
+      <div class="drill-body">
+        <span class="drill-instruction">Pratique esta palavra até atingir a pronúncia correta:</span>
+        <div class="drill-word-target" id="drill-word-target">mot</div>
+        <div class="drill-ipa" id="drill-word-ipa">[fonética]</div>
+        <div class="drill-meaning" id="drill-word-meaning">tradução</div>
+
+        <div class="drill-audio-actions">
+          <button class="btn-drill-audio" id="btn-drill-audio-normal">
+            <span>🔊 Ouvir Nativo (1.0x)</span>
+          </button>
+          <button class="btn-drill-audio slow" id="btn-drill-audio-slow">
+            <span>🐢 Ouvir Lento (0.75x)</span>
+          </button>
+        </div>
+
+        <div class="drill-record-area">
+          <button class="btn-drill-record" id="btn-drill-record">
+            <span class="drill-mic-icon" id="drill-record-icon">🎙️</span>
+            <span id="drill-record-label">Gravar e Validar Pronúncia</span>
+          </button>
+          <p class="drill-status" id="drill-status">Pressione o microfone e fale a palavra em voz alta</p>
+        </div>
+
+        <div class="drill-feedback-box" id="drill-feedback-box" style="display: none;">
+          <span id="drill-feedback-text">Feedback</span>
+        </div>
+      </div>
+
+      <footer class="drill-footer">
+        <button class="btn-drill-next" id="btn-drill-next" style="display: none;">
+          <span>PRÓXIMA PALAVRA ➔</span>
+        </button>
+        <button class="btn-drill-done" id="btn-drill-done">
+          <span>VOLTAR AO STORY ▶</span>
+        </button>
+      </footer>
     </div>
   </div>
 
