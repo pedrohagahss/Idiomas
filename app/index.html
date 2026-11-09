@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Pedro Hagah — L'Aventure Francophone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chivo:ital,wght@0,800;0,900;1,800&family=Kalam:wght@700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- Preload imediato das artes principais para ZERO delay no celular -->
+  <link rel="preload" as="image" href="../assets/img/p1_1.png">
+  <link rel="preload" as="image" href="../assets/img/p1_2.png">
+  <link rel="preload" as="image" href="../assets/img/p2_1.png">
+  <link rel="preload" as="image" href="../assets/img/dakar_goree.png">
+  <link rel="preload" as="image" href="../assets/img/quebec_frontenac.png">
+</head>
+<body class="stories-body">
+
+  <!-- ====================================================================
+       1. TELA INICIAL (CATÁLOGO NETFLIX DE QUADRINHOS & PUBLICAÇÕES REAIS)
+       ==================================================================== -->
+  <div class="comic-cover-hub netflix-mode" id="comic-cover-hub">
+    
+    <!-- Top Bar com Logo e Trilha Oficial -->
+    <header class="netflix-top-bar">
+      <div class="netflix-brand-badge">
+        <span class="brand-sub">BD FRANCOPHONE</span>
+        <span class="brand-main">PEDRO HAGAH</span>
+      </div>
+      <div class="netflix-top-actions">
+        <button id="btn-open-opening-theme" class="btn-netflix-theme" title="Ouvir trilha de abertura com letra em francês e tradução em português">
+          <span class="theme-icon">🎵</span>
+          <span class="theme-label">TRILHA OFICIAL</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Billboard / Destaque Principal -->
+    <section class="netflix-billboard" id="netflix-billboard">
+      <div class="billboard-backdrop">
+        <img src="../assets/img/p1_1.png" alt="Pedro Hagah" class="billboard-bg-img">
+        <div class="billboard-gradient"></div>
+      </div>
+      <div class="billboard-content">
+        <div class="billboard-badges-row">
+          <span class="badge-featured">🌟 OBRA EM DESTAQUE</span>
+          <span class="badge-country">🇧🇷 RECIFE & PARIS 🇫🇷</span>
+          <span class="badge-tech">VOZES NEURAIS STUDIO</span>
+        </div>
+        <h1 class="billboard-title">PEDRO HAGAH</h1>
+        <h2 class="billboard-tagline">L'Aventure Francophone : De Recife à l'IA Mondiale</h2>
+        <p class="billboard-synopsis">
+          A trajetória real em quadrinhos: da infância em Pernambuco à SAGA, Ariano Suassuna, JT Seu Carro PE e arquitetura de inteligência artificial em Paris e Montréal.
+        </p>
+        <div class="billboard-actions-row">
+          <button id="btn-hero-play" class="btn-billboard-play">
+            <span class="btn-sym">▶</span>
+            <span>INICIAR LEITURA</span>
+          </button>
+          <button id="btn-hero-book" class="btn-billboard-book">
+            <span class="btn-sym">📖</span>
+            <span>ABRIR LIVRO & ÍNDICE</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista Unificada de Quadrinhos (Todos na mesma lista, um ao lado do outro) -->
+    <div class="netflix-rails-wrapper">
+      <section class="netflix-rail-section">
+        <div class="rail-header-row">
+          <div class="rail-header-titles">
+            <h3 class="rail-title">📚 COLEÇÃO DE QUADRINHOS DA FRANCOFONIA</h3>
+            <span class="rail-subtitle">O primeiro sobre Pedro Hagah e cada quadrinho seguinte sobre um país francófono</span>
+          </div>
+          <span class="rail-hint">Deslize lateralmente ➔</span>
+        </div>
+        <div class="rail-container-outer">
+          <button class="rail-nav-btn prev" data-rail="rail-all-comics" title="Voltar">‹</button>
+          <div class="netflix-rail unified-comics-rail" id="rail-all-comics">
+            <!-- Gerado dinamicamente via JS: 1º sobre Pedro Hagah, seguido pelos países francófonos -->
+          </div>
+          <button class="rail-nav-btn next" data-rail="rail-all-comics" title="Avançar">›</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       MODAL DE PUBLICAÇÃO REAL / LIVRO ABERTO (SUMÁRIO DE CAPÍTULOS INTERNO)
+       ==================================================================== -->
+  <div class="book-modal-backdrop" id="book-catalog-modal" style="display: none;">
+    <div class="book-modal-card">
+      
+      <div class="book-modal-top-bar">
+        <button class="btn-close-book" id="btn-close-book-modal">
+          <span>← VOLTAR AO CATÁLOGO</span>
+        </button>
+        <span class="book-country-pill" id="book-modal-country">🇧🇪 Bélgica</span>
+      </div>
+
+      <div class="book-modal-inner-scroll">
+        <!-- Cabeçalho do Livro: Capa 3D, Sinopse e Botão de Ação -->
+        <div class="book-hero-presentation">
+          <div class="book-cover-wrap">
+            <img id="book-modal-cover-img" src="../assets/img/p1_1.png" alt="Capa da Obra" class="book-cover-img">
+            <div class="book-spine-glow"></div>
+          </div>
+          <div class="book-hero-meta">
+            <span class="book-badge-tag" id="book-modal-badge">NONA ARTE</span>
+            <h2 class="book-title-heading" id="book-modal-title-fr">Titre de l'Ouvrage</h2>
+            <h3 class="book-title-sub" id="book-modal-title-pt">Título em Português</h3>
+            <span class="book-duration-tag" id="book-modal-duration">12 Capítulos • 30 Cenas</span>
+
+            <div class="book-synopsis-dock">
+              <p class="book-synopsis-fr" id="book-modal-synopsis-fr"></p>
+              <p class="book-synopsis-pt" id="book-modal-synopsis-pt"></p>
+            </div>
+
+            <!-- Objetivo de Aprendizado Pedagógico (Meta de 80%) -->
+            <div class="book-objective-box" id="book-modal-objective">
+              <span class="obj-label">🎯 OBJETIVO PEDAGÓGICO:</span>
+              <span class="obj-text" id="book-modal-objective-text">Atingir 80% de precisão de pronúncia e nos exercícios para destravar os capítulos subsequentes.</span>
+            </div>
+
+            <div class="book-actions-row-hero">
+              <button id="btn-book-start-all" class="btn-book-read-all">
+                <span class="btn-icon">▶</span>
+                <span>INICIAR LEITURA DESTA OBRA</span>
+              </button>
+              <button id="btn-book-play-music" class="btn-book-soundtrack" title="Ouvir a trilha sonora temática deste país">
+                <span class="btn-icon">🎵</span>
+                <span>MÚSICA DO PAÍS</span>
+              </button>
+              <button id="btn-book-view-suno" class="btn-book-soundtrack" style="background: rgba(255, 0, 110, 0.2); border-color: rgba(255, 0, 110, 0.6); color: #ff006e;" title="Ver letra underground, prompt Suno e estilo musical">
+                <span class="btn-icon">⚡</span>
+                <span>PROMPT SUNO & LETRA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sumário / Índice Real de Capítulos (Table des Matières) -->
+        <div class="book-toc-section">
+          <h4 class="book-toc-title">📖 ÍNDICE DOS CAPÍTULOS (TABLE DES MATIÈRES)</h4>
+          <p class="book-toc-subtitle">Escolha qualquer capítulo para abrir a leitura diretamente:</p>
+          <div class="book-toc-list" id="book-modal-chapters-list">
+            <!-- Gerado dinamicamente com miniatura, título e botão 'Ler Capítulo' -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Especial: Detalhes do Suno, Letra Underground & Prompt da Trilha -->
+  <div id="book-suno-modal" class="catalog-modal-backdrop" style="display: none; z-index: 10005;">
+    <div class="catalog-modal-card" style="max-width: 700px; max-height: 85vh; overflow-y: auto;">
+      <button class="modal-close-btn" id="btn-close-suno-modal">✕</button>
+      <div style="padding: 1.5rem;">
+        <span class="book-tag" style="background: rgba(255, 0, 110, 0.2); color: #ff006e; border: 1px solid rgba(255, 0, 110, 0.4);" id="suno-modal-badge">🎵 TRILHA SONORA UNDERGROUND</span>
+        <h3 style="font-family: var(--font-comic); font-size: 1.6rem; color: #fff; margin: 0.6rem 0 0.3rem;" id="suno-modal-title">Trilha Temática</h3>
+        <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.2rem;" id="suno-modal-subtitle">Especificações especializadas para gerar no Suno AI (sem clichês de acordeom/chanson, estilo Darkwave/Electro-Rock).</p>
+
+        <!-- Bloco 1: Letra Completa em 1 Parágrafo Só -->
+        <div style="background: rgba(0,0,0,0.5); border-left: 3px solid #00f59b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+          <h5 style="color: #00f59b; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">📝 1. Letra em Francês (Parágrafo Único Contínuo)</h5>
+          <p id="suno-modal-lyrics" style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; font-style: italic;"></p>
+        </div>
+
+        <!-- Bloco 2: Prompt Suno & Marie -->
+        <div style="background: rgba(0,0,0,0.5); border-left: 3px solid #ff006e; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+          <h5 style="color: #ff006e; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">🎙️ 2. Prompt Especializado Suno & Voz da Marie (Transições Fonéticas)</h5>
+          <p id="suno-modal-prompt" style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.5; font-family: monospace;"></p>
+        </div>
+
+        <!-- Bloco 3: Influências Musicais & Estilo Underground -->
+        <div style="background: rgba(0,0,0,0.5); border-left: 3px solid #00b4d8; padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem;">
+          <h5 style="color: #00b4d8; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">⚡ 3. Estilo Musical Underground & Influências (Darkwave / Post-Punk / Electro)</h5>
+          <p id="suno-modal-style" style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.5;"></p>
+        </div>
+
+        <div style="display: flex; gap: 0.8rem; justify-content: flex-end;">
+          <button id="btn-copy-suno-lyrics" class="btn-book-soundtrack" style="font-size: 0.85rem;">📋 Copiar Letra</button>
+          <button id="btn-copy-suno-prompt" class="btn-book-read-all" style="font-size: 0.85rem; padding: 0.5rem 1rem;">📋 Copiar Prompt Suno</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       2. LEITOR DE STORIES DA HQ (9:16 VERTICAL NATIVO COM SIDE-DOCK TIKTOK)
+       ==================================================================== -->
+  <div class="story-viewport" id="story-viewport" style="display: none;">
+    
+    <!-- Barras de Progresso de Stories no Topo -->
+    <div class="story-progress-bar" id="story-progress-bar">
+      <!-- Tracinhos gerados via JS -->
+    </div>
+
+    <!-- Cabeçalho do Story -->
+    <header class="story-header">
+      <div class="story-profile">
+        <div class="avatar-ring" id="avatar-ring">
+          <span id="story-avatar">👨‍💻</span>
+        </div>
+        <div class="profile-info">
+          <span class="profile-name" id="profile-name">Pedro Hagah</span>
+          <span class="profile-location" id="profile-location">📍 Recife, Brasil</span>
+        </div>
+      </div>
+      <div class="story-header-right">
+        <div class="story-mastery-pill" id="story-mastery-pill" title="Média de aproveitamento (Meta: 80%)">
+          <span class="mastery-icon">🎯</span>
+          <span id="story-mastery-val">0%</span>
+        </div>
+        <button id="btn-toggle-ambience" class="story-ambience-pill" title="Alternar som ambiente de fundo">
+          <span id="ambience-icon">🎵</span>
+          <span id="ambience-label">Fundo</span>
+        </button>
+        <span class="story-scene-counter" id="story-scene-counter">CENA #1</span>
+      </div>
+    </header>
+
+    <!-- Imagem de Fundo do Story (9:16 Vertical Pré-Carregada) -->
+    <div class="story-media-layer" id="media-layer">
+      <img id="story-bg-img" class="story-bg-img" src="../assets/img/p1_1.png" alt="Comic Story">
+      <div class="story-halftone-dots"></div>
+      <div class="story-vignette-gradient"></div>
+
+      <!-- Onomatopeia Pop-Art -->
+      <div class="story-sfx-sticker" id="story-sfx">BZZZT!</div>
+    </div>
+
+    <!-- ====================================================================
+         BARRA DE AÇÕES LATERAL DIREITA (ESTILO TIKTOK / REELS)
+         ==================================================================== -->
+    <aside class="tiktok-actions-dock" id="tiktok-actions-dock">
+      
+      <!-- 1. Botão Gravação / Regravação (Sempre grava nova tomada) -->
+      <button id="btn-tiktok-record" class="tiktok-btn record-action" title="Gravar ou regravar sua voz">
+        <div class="tiktok-icon-circle">
+          <span class="tiktok-emoji" id="tiktok-record-icon">🎙️</span>
+        </div>
+        <span class="tiktok-label" id="tiktok-record-label">Gravar</span>
+      </button>
+
+      <!-- 2. Botão Ouvir Minha Gravação (Aparece após gravar) -->
+      <button id="btn-tiktok-playback" class="tiktok-btn playback-action" style="display: none;" title="Ouvir minha gravação">
+        <div class="tiktok-icon-circle pulse-green">
+          <span class="tiktok-emoji">▶</span>
+        </div>
+        <span class="tiktok-label">Minha Voz</span>
+      </button>
+
+      <!-- 3. Botão Ouvir Fala da Cena -->
+      <button id="btn-tiktok-speak" class="tiktok-btn speak-action" title="Ouvir a fala com voz neural">
+        <div class="tiktok-icon-circle">
+          <span class="tiktok-emoji">🔊</span>
+        </div>
+        <span class="tiktok-label">Cena</span>
+      </button>
+
+      <!-- 3. Botão Notícia / Dossier Aprofundado com Leitura IA -->
+      <button id="btn-tiktok-dossier" class="tiktok-btn dossier-action" title="Notícia e explicação sobre o tema">
+        <div class="tiktok-icon-circle pulse-gold">
+          <span class="tiktok-emoji">📰</span>
+          <span class="tiktok-badge">IA</span>
+        </div>
+        <span class="tiktok-label">Notícia</span>
+      </button>
+
+      <!-- 4. Botão Mini-Game / Desafio de Verbos e Reconstrução da Cena -->
+      <button id="btn-tiktok-minigame" class="tiktok-btn minigame-action" title="Treino interativo de verbos e palavras">
+        <div class="tiktok-icon-circle pulse-blue">
+          <span class="tiktok-emoji">🎮</span>
+          <span class="tiktok-badge">DÉFI</span>
+        </div>
+        <span class="tiktok-label">Treino</span>
+      </button>
+
+      <!-- 5. Botão Alternar Tradução PT -->
+      <button id="btn-tiktok-pt" class="tiktok-btn pt-action active" title="Alternar tradução">
+        <div class="tiktok-icon-circle">
+          <span class="tiktok-emoji">🇧🇷</span>
+        </div>
+        <span class="tiktok-label" id="tiktok-pt-label">Trad. ON</span>
+      </button>
+
+      <!-- 6. Botão Voltar para Início -->
+      <button id="btn-tiktok-home" class="tiktok-btn home-action" title="Voltar ao Catálogo">
+        <div class="tiktok-icon-circle">
+          <span class="tiktok-emoji">🏠</span>
+        </div>
+        <span class="tiktok-label">Catálogo</span>
+      </button>
+
+      <audio id="story-user-player" playsinline style="display: none;"></audio>
+    </aside>
+
+    <!-- ====================================================================
+         CONTEÚDO DA CENA: BALÃO E LEGENDA NO CANTO INFERIOR ESQUERDO
+         ==================================================================== -->
+    <div class="story-content-layer" id="story-content-layer">
+      
+      <!-- Caixa Amarela de Narrador -->
+      <div class="story-caption-card" id="story-caption-card" style="display: none;">
+        <span class="caption-loc-tag" id="caption-loc-tag">RECIFE —</span>
+        <span class="caption-text-body" id="caption-text-body">Descrição da cena</span>
+        <button class="caption-speak-btn" id="btn-speak-narrator" title="Ouvir narrador">🔊</button>
+      </div>
+
+      <!-- Card Flutuante de Qualificação da Fala do Aluno -->
+      <div class="speech-qual-toast" id="speech-qualification-toast" style="display: none;">
+        <div class="qual-top-row">
+          <div class="qual-score-tag">
+            <span class="qual-stars" id="qual-stars">⭐⭐⭐⭐⭐</span>
+            <span class="qual-pct" id="qual-score">95% PRECISÃO</span>
+          </div>
+          <button class="qual-close-btn" id="btn-close-qual" title="Fechar avaliação">✕</button>
+        </div>
+        <div class="qual-grade" id="qual-title">EXCELLENT ACCENT !</div>
+        <p class="qual-commentary" id="qual-commentary">Pronúncia muito fluida e entonação exemplar!</p>
+        <div class="qual-words-dock" id="qual-words-dock"></div>
+        <div class="qual-actions-row">
+          <button id="btn-qual-listen-user" class="btn-qual-play">▶ Ouvir Minha Voz</button>
+          <button id="btn-qual-listen-native" class="btn-qual-native">🔊 Ouvir Nativo</button>
+        </div>
+      </div>
+
+      <!-- Balão de Fala do Personagem -->
+      <div class="story-speech-bubble" id="story-speech-bubble">
+        <div class="bubble-header-row">
+          <div class="bubble-speaker-tag" id="bubble-speaker-tag">PEDRO</div>
+          <span class="bubble-hint-tap">Toque nas palavras 👆</span>
+        </div>
+        
+        <!-- Frase em Francês com Palavras Clicáveis -->
+        <p class="story-fr-text" id="story-fr-text">
+          <!-- Palavras inseridas via JS -->
+        </p>
+
+        <!-- Tradução Contextual em Português -->
+        <p class="story-pt-text" id="story-pt-text">
+          <!-- Tradução -->
+        </p>
+
+        <!-- Dica Fonética IPA -->
+        <div class="story-ipa-badge" id="story-ipa-badge">
+          <span class="ipa-code" id="ipa-code">[fonética]</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ZONAS DE TOQUE (ESQUERDA = VOLTA, DIREITA = AVANÇA) -->
+    <div class="story-tap-left" id="tap-prev" title="Voltar Story"></div>
+    <div class="story-tap-right" id="tap-next" title="Avançar Story"></div>
+
+  </div>
+
+  <!-- ====================================================================
+       3. DRAWER / MODAL DESLIZANTE DE NOTÍCIA & DOSSIER (ESTILO TIKTOK SHEET)
+       ==================================================================== -->
+  <div class="dossier-drawer-backdrop" id="dossier-drawer-backdrop" style="display: none;">
+    <div class="dossier-drawer" id="dossier-drawer">
+      
+      <div class="drawer-drag-bar"></div>
+
+      <div class="drawer-header">
+        <div class="drawer-badge" id="drawer-badge">ACTUALITÉ TECH 2026</div>
+        <button class="drawer-close-btn" id="btn-close-dossier" title="Fechar notícia">✕</button>
+      </div>
+
+      <div class="drawer-scrollable-body">
+        <h3 class="drawer-title-fr" id="drawer-title-fr">Titre de l'Actualité</h3>
+        <h4 class="drawer-title-pt" id="drawer-title-pt">Título em Português</h4>
+
+        <!-- Botão de Leitura de Texto Completo por IA -->
+        <div class="drawer-ai-voice-card">
+          <button class="btn-read-dossier-ai" id="btn-read-dossier-ai">
+            <span class="ai-speak-icon">▶</span>
+            <span id="ai-speak-text">ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)</span>
+          </button>
+          <span class="ai-voice-label">🎙️ Voz Neural de Estúdio • Leitura fluida e pausada</span>
+        </div>
+
+        <div class="drawer-section-label">🇫🇷 TEXTE INTÉGRAL EN FRANÇAIS :</div>
+        <p class="drawer-article-fr" id="drawer-article-fr">
+          <!-- Texto corrido em francês -->
+        </p>
+
+        <div class="drawer-section-label">🇧🇷 TRADUÇÃO CONTEXTUAL EM PORTUGUÊS :</div>
+        <p class="drawer-article-pt" id="drawer-article-pt">
+          <!-- Tradução contextual -->
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       4. MODAL CINEMATOGRÁFICO: ABERTURA MUSICAL COM LEGENDAS (PT-BR / ES)
+       ==================================================================== -->
+  <div class="opening-theme-modal" id="opening-theme-modal" style="display: none;">
+    <div class="theme-modal-backdrop" id="theme-modal-backdrop"></div>
+    <div class="theme-modal-card">
+      <header class="theme-modal-header">
+        <div class="theme-title-dock">
+          <span class="theme-badge">TRILHA SONORA DE ABERTURA</span>
+          <h2 class="theme-title">L'AVENTURE FRANCOPHONE</h2>
+          <p class="theme-subtitle">Pedro Hagah • Trilha Oficial da Aventura</p>
+        </div>
+        <button id="btn-close-theme-modal" class="theme-close-btn" title="Fechar Abertura">✕</button>
+      </header>
+
+      <div class="theme-equalizer-dock">
+        <div class="eq-bars">
+          <div class="eq-bar bar-1"></div>
+          <div class="eq-bar bar-2"></div>
+          <div class="eq-bar bar-3"></div>
+          <div class="eq-bar bar-4"></div>
+          <div class="eq-bar bar-5"></div>
+        </div>
+        <span id="theme-timer" class="theme-timer">00:00 / 00:45</span>
+      </div>
+
+      <!-- Container de Legendas Sincronizadas em Português e Espanhol -->
+      <div class="theme-subtitles-viewport" id="theme-subtitles-viewport">
+        <!-- Inseridas dinamicamente com destaque síncrono via JS -->
+      </div>
+
+      <div class="theme-modal-actions">
+        <button id="btn-theme-toggle-play" class="btn-theme-control">
+          <span id="theme-play-icon">⏸️</span>
+          <span id="theme-play-label">Pausar</span>
+        </button>
+        <button id="btn-theme-start-story" class="btn-theme-start-story">
+          <span>ABRIR A HQ AGORA ▶</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================
+       5. MODAL DE CHECKPOINT INTERATIVO ENTRE STORIES (META DE 80%)
+       ==================================================================== -->
+  <div class="checkpoint-modal-backdrop" id="story-checkpoint-modal" style="display: none;">
+    <div class="checkpoint-card">
+      <header class="checkpoint-header">
+        <span class="checkpoint-badge">⚡ CHECKPOINT PEDAGÓGICO • META 80%</span>
+        <button class="checkpoint-close-btn" id="btn-close-checkpoint" title="Fechar checkpoint">✕</button>
+      </header>
+
+      <div class="checkpoint-body">
+        <h3 class="checkpoint-title" id="chk-title">Validação da Cena</h3>
+        <p class="checkpoint-desc" id="chk-desc">Mantenha a média de 80% em áudio e atividades para destravar o próximo capítulo!</p>
+
+        <!-- Barra de Progresso de Aproveitamento -->
+        <div class="checkpoint-score-bar-wrap">
+          <div class="chk-bar-labels">
+            <span>Seu Aproveitamento Neste Capítulo:</span>
+            <strong id="chk-score-num">0%</strong>
+          </div>
+          <div class="chk-progress-bg">
+            <div class="chk-progress-fill" id="chk-progress-fill" style="width: 0%;"></div>
+            <div class="chk-target-flag" style="left: 80%;">80% META</div>
+          </div>
+        </div>
+
+        <div class="checkpoint-status-badge" id="chk-status-badge">
+          <span>Pratique a fala ou resolva o desafio para somar pontos!</span>
+        </div>
+
+        <div class="checkpoint-actions-grid">
+          <button class="btn-chk-action minigame-btn" id="btn-chk-minigame">
+            <span class="chk-icon">🎮</span>
+            <div class="chk-btn-text">
+              <strong>Desafio dos 4 Tempos</strong>
+              <small>Treinar verbos e reconstruir frase (+XP)</small>
+            </div>
+          </button>
+
+          <button class="btn-chk-action mic-btn" id="btn-chk-record">
+            <span class="chk-icon">🎙️</span>
+            <div class="chk-btn-text">
+              <strong>Gravar Fala no Microfone</strong>
+              <small>Validar pronúncia com IA e pontuar</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <footer class="checkpoint-footer">
+        <button class="btn-chk-continue" id="btn-chk-continue">
+          <span>AVANÇAR PARA A PRÓXIMA CENA ▶</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <audio id="theme-audio-player" src="../assets/audio/opening_theme.mp3" preload="auto" playsinline></audio>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

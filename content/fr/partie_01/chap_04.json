@@ -1,0 +1,137 @@
+{
+  "chapter_id": "chap_04",
+  "order": 4,
+  "title_fr": "L'Entrepreneuriat, la LegalTech et l'IA (JT Seu Carro PE & ConsutIA)",
+  "title_pt": "Empreendedorismo, LegalTech e IA (JT Seu Carro PE & ConsutIA)",
+  "context": {
+    "summary_pt": "Pedro orquestra o desenvolvimento operacional e tecnológico por meio da JT Seu Carro PE, da plataforma ConsutIA e dos estudos avançados em arquitetura de IA.",
+    "bullets_fr": [
+      "JT Seu Carro PE Ltda (2016-présent) : Ingénierie financière F&I, tables de crédit bancaire, DRE par châssis et conformité DETRAN-PE / RENAVE.",
+      "Plateforme ConsutIA / iAuto : SaaS Agent-First (React, TypeScript, Cloud Run, Firebase), pipelines RAG (Vertex AI), audit forensique sur WhatsApp (Evolution API, Neon PostgreSQL, FFmpeg, Whisper/Gemini).",
+      "MBA IA pour Business (2024-2026) : EXAME / Saint Paul Escola de Negócios (Matricule 351230), orchestration multi-agents et protocole MCP."
+    ]
+  },
+  "scenes": [
+    {
+      "scene_id": "s4",
+      "title_fr": "L'Écosystème ConsutIA et le Pitch IA",
+      "panels": [
+        {
+          "panel_id": "p4_1",
+          "visual_description": "Pedro sur le parc automobile de l'Avenida Caxangá, analysant un rapport de trésorerie sur tablette.",
+          "image": null,
+          "voice_direction": "Voix posée, ferme et professionnelle, incarnant le dirigeant d'entreprise.",
+          "dialogue_fr": "En tant que cofondateur, j'ai structuré la trésorerie et la conformité d'une concession automobile à Recife.",
+          "dialogue_pt": "Como cofundador, estruturei a tesouraria e a conformidade de uma concessionária de automóveis em Recife.",
+          "breath_groups": [
+            { "fr": "En tant que cofondateur,", "pause_ms": 2200 },
+            { "fr": "j'ai structuré la trésorerie", "pause_ms": 2500 },
+            { "fr": "et la conformité", "pause_ms": 1800 },
+            { "fr": "d'une concession automobile", "pause_ms": 2500 },
+            { "fr": "à Recife.", "pause_ms": 2000 }
+          ],
+          "audio_target_duration_ms": 7000,
+          "pause_repetition_ms": 7000,
+          "phonetics_guide": "[ɑ̃ tɑ̃ kə ko.fɔ̃.da.tœʁ | ʒ‿e stʁyk.ty.ʁe la tʁe.zɔʁ.ʁi e la kɔ̃.fɔʁ.mi.te d‿yn kɔ̃.sɛ.sjɔ̃ o.tɔ.mɔ.bil a ʁe.si.fe]",
+          "pronunciation_tip_pt": "Em francês, a pronúncia de Recife costuma ser adaptada para [ʁe.si.fe]. O conector 'en tant que' expressa papel ou atribuição ('na condição de / como').",
+          "interactive_quiz": {
+            "type": "fill_in_the_blank",
+            "sentence_masked": "_____ cofondateur, j'ai structuré la trésorerie et la conformité d'une concession automobile à Recife.",
+            "correct_answer": "En tant que",
+            "distractors": ["Grâce à", "Afin de", "Parce que"],
+            "explanation_pt": "'En tant que' é uma locução prepositiva que introduz a função ou título profissional de quem fala ('como / na condição de')."
+          }
+        },
+        {
+          "panel_id": "p4_2",
+          "visual_description": "Pedro dans son centre de données, supervisant les flux multi-agents de ConsutIA.",
+          "image": null,
+          "voice_direction": "Rythme précis et dynamique, maîtrise technologique affirmée.",
+          "dialogue_fr": "Je conçois des systèmes d'agents intelligents et des pipelines RAG pour automatiser des analyses juridiques et financières.",
+          "dialogue_pt": "Eu projeto sistemas de agentes inteligentes e pipelines RAG para automatizar análises jurídicas e financeiras.",
+          "breath_groups": [
+            { "fr": "Je conçois des systèmes", "pause_ms": 2200 },
+            { "fr": "d'agents intelligents", "pause_ms": 2200 },
+            { "fr": "et des pipelines RAG", "pause_ms": 2000 },
+            { "fr": "pour automatiser", "pause_ms": 1800 },
+            { "fr": "des analyses juridiques et financières.", "pause_ms": 3000 }
+          ],
+          "audio_target_duration_ms": 8000,
+          "pause_repetition_ms": 8000,
+          "phonetics_guide": "[ʒə kɔ̃.swa de sis.tɛm d‿a.ʒɑ̃.z‿ɛ̃.tɛ.li.ʒɑ̃ e de pajp.lajn ʁaɡ puʁ o.tɔ.ma.ti.ze de.z‿a.na.liz ʒy.ʁi.dik e fi.nɑ̃.sjɛʁ]",
+          "pronunciation_tip_pt": "Liaisons sonoras em 'agents‿intelligents' [a.ʒɑ̃.z‿ɛ̃] e 'des‿analyses' [de.z‿a]. O anglicismo técnico 'pipelines' pronuncia-se [pajp.lajn].",
+          "interactive_quiz": {
+            "type": "multiple_choice",
+            "sentence_masked": "Je conçois des systèmes d'agents intelligents et des pipelines RAG _____ automatiser des analyses juridiques et financières.",
+            "correct_answer": "pour",
+            "distractors": ["avec", "sans", "contre"],
+            "explanation_pt": "'Pour' seguido de infinitivo expressa objetivo ou propósito deliberado."
+          }
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "g4_1",
+      "title_fr": "Les Connecteurs Logiques du Pitch Professionnel",
+      "title_pt": "Conectores Lógicos para Pitch Profissional e Negócios",
+      "explanation_pt": "Para encadear ideias com rigor e persuasão em francês comercial ou técnico, utilize conectores específicos de causa, finalidade e posição.",
+      "table": {
+        "headers": ["Connecteur", "Structure", "Exemple Pratique", "Sens en Portugais"],
+        "rows": [
+          ["Grâce à", "+ Nom", "Grâce à des scripts d'automatisation, nous gagnons du temps.", "Graças a (causa positiva)"],
+          ["Afin de", "+ Infinitif", "Afin de sécuriser la chaîne de garde numérique, j'utilise PostgreSQL.", "A fim de / para (finalidade)"],
+          ["En tant que", "+ Titre sans article", "En tant qu'architecte de solutions, je supervise l'orchestration.", "Como / na qualidade de (função)"]
+        ]
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_a",
+      "type": "multiple_choice",
+      "instruction_fr": "Complétez chaque phrase avec le connecteur logique approprié.",
+      "instruction_pt": "Complete cada frase com o conector lógico adequado.",
+      "items": [
+        {
+          "prompt": "_____ des scripts d'automatisation, nous gagnons un temps précieux.",
+          "options": ["Grâce à", "Afin de", "En tant que"],
+          "answer": "Grâce à",
+          "explanation_pt": "'Grâce à' expressa uma causa benéfica seguida de substantivo."
+        },
+        {
+          "prompt": "J'utilise Whisper et Gemini _____ transcrire les preuves audio avec précision.",
+          "options": ["afin de", "grâce à", "en tant que"],
+          "answer": "afin de",
+          "explanation_pt": "'Afin de' expressa a finalidade antes de verbo no infinitivo."
+        },
+        {
+          "prompt": "_____ architecte de solutions, je supervise l'orchestration des flux multi-agents.",
+          "options": ["En tant qu'", "Grâce à", "Afin de"],
+          "answer": "En tant qu'",
+          "explanation_pt": "'En tant qu'' introduz a função profissional diante de palavra iniciada por vogal."
+        }
+      ]
+    },
+    {
+      "id": "ex_b",
+      "type": "audio_recording",
+      "instruction_fr": "Enregistrez votre voix en prononçant le script suivant sans vous arrêter.",
+      "instruction_pt": "Grave seu pitch com postura e tom executivo seguro.",
+      "items": [],
+      "script_fr": "En tant que cofondateur, j'ai structuré la trésorerie et la conformité d'une concession automobile à Recife. Je conçois des systèmes d'agents intelligents et des pipelines RAG pour automatiser des analyses juridiques et financières."
+    }
+  ],
+  "vocabulary": [
+    { "fr": "en tant que", "pt": "na qualidade de / como", "ipa": "[ɑ̃ tɑ̃ kə]" },
+    { "fr": "la trésorerie", "pt": "a tesouraria", "ipa": "[la tʁe.zɔʁ.ʁi]" },
+    { "fr": "la conformité", "pt": "a conformidade / compliance", "ipa": "[la kɔ̃.fɔʁ.mi.te]" },
+    { "fr": "concession automobile", "pt": "concessionária de veículos", "ipa": "[kɔ̃.sɛ.sjɔ̃ o.tɔ.mɔ.bil]" },
+    { "fr": "concevoir", "pt": "projetar / conceber", "ipa": "[kɔ̃.sə.vwaʁ]" },
+    { "fr": "système d'agents", "pt": "sistema de agentes", "ipa": "[sis.tɛm d‿a.ʒɑ̃]" },
+    { "fr": "grâce à", "pt": "graças a", "ipa": "[ɡʁɑs a]" },
+    { "fr": "afin de", "pt": "a fim de / para", "ipa": "[a.fɛ̃ də]" },
+    { "fr": "chaîne de garde numérique", "pt": "cadeia de custódia digital", "ipa": "[ʃɛn də ɡaʁd ny.me.ʁik]" }
+  ]
+}

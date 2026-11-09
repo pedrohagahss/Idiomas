@@ -1,0 +1,155 @@
+{
+  "chapter_id": "chap_02",
+  "order": 2,
+  "title_fr": "La Routine Professionnelle et les Actions Réfléchies",
+  "title_pt": "A Rotina Profissional e as Ações Reflexivas",
+  "context": {
+    "summary_pt": "No seu dia a dia entre a direção operacional da JT Seu Carro PE, o desenvolvimento da plataforma ConsutIA e as aulas noturnas na Escola Técnica Estadual Cícero Dias, Pedro estrutura o seu dia com método.",
+    "bullets_fr": [
+      "Direction opérationnelle chez JT Seu Carro PE.",
+      "Développement de la plateforme ConsutIA.",
+      "Cours du soir à l'École Technique d'État Cícero Dias."
+    ]
+  },
+  "scenes": [
+    {
+      "scene_id": "s2",
+      "title_fr": "La Préparation Matinale et la Gestion de Projet",
+      "panels": [
+        {
+          "panel_id": "p2_1",
+          "visual_description": "Pedro dans sa salle de bains, le matin, se préparant avant de rejoindre son bureau.",
+          "image": null,
+          "voice_direction": "Ton chaleureux, articulation claire.",
+          "dialogue_fr": "Chaque matin, je me rase, je me prépare et je prends mon café avant d'analyser les projets.",
+          "dialogue_pt": "Toda manhã, eu me barbeio, me preparo e tomo meu café antes de analisar os projetos.",
+          "breath_groups": [
+            { "fr": "Chaque matin,", "pause_ms": 1500 },
+            { "fr": "je me rase,", "pause_ms": 1800 },
+            { "fr": "je me prépare", "pause_ms": 2000 },
+            { "fr": "et je prends mon café", "pause_ms": 2200 },
+            { "fr": "avant d'analyser les projets.", "pause_ms": 2500 }
+          ],
+          "audio_target_duration_ms": 6000,
+          "pause_repetition_ms": 6000,
+          "phonetics_guide": "[ʃak ma.tɛ̃ | ʒə mə ʁaz | ʒə mə pʁe.paʁ e ʒə pʁɑ̃ mɔ̃ ka.fe a.vɑ̃ d‿a.na.li.ze le pʁɔ.ʒɛ]",
+          "pronunciation_tip_pt": "Observe os verbos pronominais 'je me rase' e 'je me prépare' com o 'e' caduco leve, e a elisão suave em 'd'analyser' [d‿a.na.li.ze].",
+          "interactive_quiz": {
+            "type": "fill_in_the_blank",
+            "sentence_masked": "Chaque matin, je me rase, je me prépare et je _____ mon café avant d'analyser les projets.",
+            "correct_answer": "prends",
+            "distractors": ["prend", "prenons", "prenez"],
+            "explanation_pt": "Com o sujeito 'je', o verbo irregular prendre assume a forma 'prends' no presente (o 's' final é mudo)."
+          }
+        },
+        {
+          "panel_id": "p2_2",
+          "visual_description": "Pedro à son bureau, ouvrant son ordinateur portable et consultant un tableau de bord.",
+          "image": null,
+          "voice_direction": "Ton assuré et rythmé, marquant l'autorité opérationnelle.",
+          "dialogue_fr": "Je prends la responsabilité des opérations financières et nous prenons les décisions stratégiques ensemble.",
+          "dialogue_pt": "Eu assumo a responsabilidade das operações financeiras e nós tomamos as decisões estratégicas juntos.",
+          "breath_groups": [
+            { "fr": "Je prends la responsabilité", "pause_ms": 2500 },
+            { "fr": "des opérations financières", "pause_ms": 2500 },
+            { "fr": "et nous prenons", "pause_ms": 2000 },
+            { "fr": "les décisions stratégiques ensemble.", "pause_ms": 3000 }
+          ],
+          "audio_target_duration_ms": 7000,
+          "pause_repetition_ms": 7000,
+          "phonetics_guide": "[ʒə pʁɑ̃ la ʁɛs.pɔ̃.sa.bi.li.te de.z‿ɔ.pe.ʁa.sjɔ̃ fi.nɑ̃.sjɛʁ e nu pʁə.nɔ̃ le de.si.zjɔ̃ stʁa.te.ʒik ɑ̃.sɑ̃bl]",
+          "pronunciation_tip_pt": "Liaison obrigatória em 'des‿opérations' [de.z‿ɔ]. O contraste vocal entre 'je prends' [pʁɑ̃] (nasal) e 'nous prenons' [pʁə.nɔ̃] é fundamental.",
+          "interactive_quiz": {
+            "type": "multiple_choice",
+            "sentence_masked": "Je prends la responsabilité des opérations financières et nous _____ les décisions stratégiques ensemble.",
+            "correct_answer": "prenons",
+            "distractors": ["prennent", "prenez", "prends"],
+            "explanation_pt": "Com o pronome 'nous', a terminação no presente do indicativo para 'prendre' é '-ons' com radical reduzido: prenons."
+          }
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "g2_1",
+      "title_fr": "Les Verbes Pronominaux au Présent (Se préparer)",
+      "title_pt": "Os Verbos Pronominais no Presente (Se préparer)",
+      "explanation_pt": "Os verbos pronominais são acompanhados por um pronome reflexivo que concorda com o sujeito. Lembre-se que 'vous' pode significar 'você' (formal) ou 'vocês' (plural).",
+      "table": {
+        "headers": ["Pronom Sujet", "Pronom Réfléchi + Verbe", "Traduction PT"],
+        "rows": [
+          ["Je", "me prépare", "Eu me preparo"],
+          ["Tu", "te prépares", "Tu te preparas / Você se prepara"],
+          ["Il / Elle", "se prépare", "Ele / Ela se prepara"],
+          ["Nous", "nous préparons", "Nós nos preparamos"],
+          ["Vous", "vous préparez", "Você se prepara (formal) / Vocês se preparam"],
+          ["Ils / Elles", "se préparent", "Eles / Elas se preparam"]
+        ]
+      }
+    },
+    {
+      "id": "g2_2",
+      "title_fr": "Le Verbe Irrégulier Prendre au Présent",
+      "title_pt": "O Verbo Irregular Prendre no Presente",
+      "explanation_pt": "Verbo essencial do 3º grupo. O radical altera-se: prend- no singular, pren- com nous/vous, e pren- com duplo 'n' (prennent) com ils/elles.",
+      "table": {
+        "headers": ["Personne", "Présent de l'Indicatif", "Exemple Pratique"],
+        "rows": [
+          ["Je", "prends", "Je prends les commandes."],
+          ["Tu", "prends", "Tu prends le temps d'analyser."],
+          ["Il / Elle", "prend", "Il prend en charge le dossier."],
+          ["Nous", "prenons", "Nous prenons le contrôle des flux."],
+          ["Vous", "prenez", "Vous prenez la parole."],
+          ["Ils / Elles", "prennent", "Ils prennent des mesures strictes."]
+        ]
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_a",
+      "type": "multiple_choice",
+      "instruction_fr": "Sélectionnez la bonne forme verbale pour compléter la phrase.",
+      "instruction_pt": "Selecione a forma verbal correta para completar a frase.",
+      "items": [
+        {
+          "prompt": "Tous les matins, Pedro _____ avant de partir au travail.",
+          "options": ["se rase", "me rase", "te rases"],
+          "answer": "se rase",
+          "explanation_pt": "Pedro corresponde à 3ª pessoa do singular (il) → se rase."
+        },
+        {
+          "prompt": "Nous _____ un café fort en équipe.",
+          "options": ["prenons", "prennent", "prenez"],
+          "answer": "prenons",
+          "explanation_pt": "Com 'nous', a terminação é '-ons' → prenons."
+        },
+        {
+          "prompt": "Je _____ pour la réunion d'IA.",
+          "options": ["me prépare", "se prépare", "nous préparons"],
+          "answer": "me prépare",
+          "explanation_pt": "Com 'je', o pronome reflexivo é 'me' → me prépare."
+        }
+      ]
+    },
+    {
+      "id": "ex_b",
+      "type": "audio_recording",
+      "instruction_fr": "Enregistrez votre voix en prononçant le script suivant sans vous arrêter.",
+      "instruction_pt": "Grave sua voz lendo o roteiro abaixo com fluidez.",
+      "items": [],
+      "script_fr": "Chaque matin, je me rase, je me prépare et je prends mon café avant d'analyser les projets. Je prends la responsabilité des opérations financières et nous prenons les décisions stratégiques ensemble."
+    }
+  ],
+  "vocabulary": [
+    { "fr": "chaque matin", "pt": "toda manhã / cada manhã", "ipa": "[ʃak ma.tɛ̃]" },
+    { "fr": "se raser", "pt": "barbear-se", "ipa": "[sə ʁa.ze]" },
+    { "fr": "se préparer", "pt": "preparar-se", "ipa": "[sə pʁe.pa.ʁe]" },
+    { "fr": "prendre", "pt": "tomar / pegar / assumir", "ipa": "[pʁɑ̃dʁ]" },
+    { "fr": "prendre la responsabilité", "pt": "assumir a responsabilidade", "ipa": "[pʁɑ̃dʁ la ʁɛs.pɔ̃.sa.bi.li.te]" },
+    { "fr": "décision stratégique", "pt": "decisão estratégica", "ipa": "[de.si.zjɔ̃ stʁa.te.ʒik]" },
+    { "fr": "ensemble", "pt": "juntos", "ipa": "[ɑ̃.sɑ̃bl]" },
+    { "fr": "avant de", "pt": "antes de", "ipa": "[a.vɑ̃ də]" }
+  ]
+}

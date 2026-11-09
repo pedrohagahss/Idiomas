@@ -1,0 +1,1021 @@
+/**
+ * Orquestrador da HQ Digital — Layout Estilo TikTok / Reels
+ * Ações Rápidas na Lateral Direita, Balão Compacto e Dossier / Notícia com Leitura por IA
+ */
+
+import { massiveEngine } from './story_engine.js';
+import { naturalVoice } from './audio.js';
+import { speechEngine } from './speech.js';
+import { lexicalAligner } from './aligner.js';
+import { ambientEngine } from './ambient.js';
+import { frenchMiniGame } from './minigame.js';
+import { masteryEngine } from './progress.js';
+
+class MassiveComicApp {
+  constructor() {
+    this.currentSceneNumber = 1;
+    this.showTranslation = true;
+    this.lastAudioUrl = null;
+    this.isDossierReading = false;
+    this.preloadedImages = new Set();
+  }
+
+  init() {
+    console.log('Iniciando HQ Digital estilo TikTok com Dossiers e Voz Neural...');
+    this.preloadCoreImages();
+    this.setupCoverHub();
+    this.setupOpeningTheme();
+    this.setupStoryNavigation();
+    this.setupTikTokActions();
+    this.setupDossierDrawer();
+  }
+
+  preloadCoreImages() {
+    const urls = [
+      '../assets/img/p1_1.png',
+      '../assets/img/p1_2.png',
+      '../assets/img/p2_1.png',
+      '../assets/img/dakar_goree.png',
+      '../assets/img/quebec_frontenac.png'
+    ];
+    urls.forEach(u => {
+      const img = new Image();
+      img.src = u;
+      img.onload = () => this.preloadedImages.add(u);
+    });
+  }
+
+  setupOpeningTheme() {
+    const btnOpen = document.getElementById('btn-open-opening-theme');
+    const modal = document.getElementById('opening-theme-modal');
+    const btnClose = document.getElementById('btn-close-theme-modal');
+    const btnPlay = document.getElementById('btn-theme-toggle-play');
+    const playIcon = document.getElementById('theme-play-icon');
+    const playLabel = document.getElementById('theme-play-label');
+    const btnStartStory = document.getElementById('btn-theme-start-story');
+    const audio = document.getElementById('theme-audio-player');
+    const timer = document.getElementById('theme-timer');
+    const subViewport = document.getElementById('theme-subtitles-viewport');
+    const backdrop = document.getElementById('theme-modal-backdrop');
+
+    if (!btnOpen || !modal || !audio) return;
+
+    const THEME_SUBTITLES = [
+      {
+        start: 1.5,
+        end: 7.0,
+        fr: "Des ponts de Recife aux cieux de Paris, l'odyssée du code et de la parole commence.",
+        pt: "Das pontes do Recife aos céus de Paris, nasce uma odisseia de código, arte e palavra."
+      },
+      {
+        start: 7.0,
+        end: 13.0,
+        fr: "Pedro Hagah relie l'intelligence artificielle à l'âme de l'histoire et de la philosophie.",
+        pt: "Pedro Hagah conecta a inteligência artificial à alma da história e das ideias."
+      },
+      {
+        start: 13.0,
+        end: 18.5,
+        fr: "De la mémoire ancestrale de Gorée et Dakar aux grands débats des Lumières en Europe.",
+        pt: "Da memória ancestral de Gorée e Dakar aos debates iluministas da Europa."
+      },
+      {
+        start: 18.5,
+        end: 23.5,
+        fr: "Et par les horizons d'hiver du Québec, là où la technologie et la culture se rencontrent.",
+        pt: "E pelos horizontes de inverno do Québec, onde a tecnologia e a cultura se abraçam."
+      },
+      {
+        start: 23.5,
+        end: 32.0,
+        fr: "Pedro Hagah — L'Aventure Francophone. Le futur parle toutes les langues. Bienvenue !",
+        pt: "L'Aventure Francophone — O futuro fala todas as línguas. Prepare-se para a jornada!"
+      }
+    ];
+
+    if (subViewport) {
+      subViewport.innerHTML = THEME_SUBTITLES.map((sub, i) => `
+        <div class="theme-sub-card ${i === 0 ? 'active' : ''}" id="theme-sub-${i}">
+          <div class="sub-lang-row sub-row-fr">
+            <span class="sub-flag">🇫🇷</span>
+            <span class="sub-text-fr">${sub.fr}</span>
+          </div>
+          <div class="sub-lang-row sub-row-pt">
+            <span class="sub-flag">🇧🇷</span>
+            <span class="sub-text-pt">${sub.pt}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const formatTime = (secs) => {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const updatePlayButtonState = () => {
+      if (!playIcon || !playLabel) return;
+      if (audio.paused) {
+        playIcon.textContent = '▶';
+        playLabel.textContent = 'Tocar';
+      } else {
+        playIcon.textContent = '⏸️';
+        playLabel.textContent = 'Pausar';
+      }
+    };
+
+    btnOpen.onclick = (e) => {
+      e.stopPropagation();
+      naturalVoice.stop();
+      ambientEngine.stopCurrent();
+      modal.style.display = 'flex';
+      audio.currentTime = 0;
+      audio.play().then(updatePlayButtonState).catch(() => updatePlayButtonState());
+    };
+
+    const closeModal = () => {
+      audio.pause();
+      modal.style.display = 'none';
+    };
+
+    if (btnClose) btnClose.onclick = (e) => { e.stopPropagation(); closeModal(); };
+    if (backdrop) backdrop.onclick = (e) => { e.stopPropagation(); closeModal(); };
+
+    if (btnPlay) {
+      btnPlay.onclick = (e) => {
+        e.stopPropagation();
+        if (audio.paused) {
+          audio.play().then(updatePlayButtonState);
+        } else {
+          audio.pause();
+          updatePlayButtonState();
+        }
+      };
+    }
+
+    if (btnStartStory) {
+      btnStartStory.onclick = (e) => {
+        e.stopPropagation();
+        closeModal();
+        const hub = document.getElementById('comic-cover-hub');
+        const viewport = document.getElementById('story-viewport');
+        const arcSelect = document.getElementById('arc-select');
+        const startScene = arcSelect ? parseInt(arcSelect.value, 10) : 0;
+        if (hub) hub.style.display = 'none';
+        if (viewport) viewport.style.display = 'flex';
+        ambientEngine.ensureContext();
+        this.loadSceneByIndex(startScene);
+      };
+    }
+
+    audio.ontimeupdate = () => {
+      const cur = audio.currentTime;
+      const dur = audio.duration || 45;
+      if (timer) timer.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+
+      THEME_SUBTITLES.forEach((sub, i) => {
+        const card = document.getElementById(`theme-sub-${i}`);
+        if (!card) return;
+        const isActive = cur >= sub.start && cur < sub.end;
+        if (isActive && !card.classList.contains('active')) {
+          card.classList.add('active');
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else if (!isActive && card.classList.contains('active')) {
+          card.classList.remove('active');
+        }
+      });
+    };
+
+    audio.onended = () => {
+      updatePlayButtonState();
+    };
+  }
+
+  setupCoverHub() {
+    const hub = document.getElementById('comic-cover-hub');
+    const viewport = document.getElementById('story-viewport');
+
+    // Renderiza a lista única contínua de quadrinhos lado a lado (1º Pedro Hagah + cada país francófono)
+    const railAllComics = document.getElementById('rail-all-comics');
+
+    const renderCard = (work, isFirst = false) => {
+      const card = document.createElement('div');
+      card.className = `rail-comic-card ${isFirst ? 'card-featured-author' : ''}`;
+      card.innerHTML = `
+        <div class="card-poster-wrap">
+          <img src="${work.coverImage}" alt="${work.title}" class="card-poster-img" loading="lazy">
+          <span class="card-badge-country">${isFirst ? '⭐ SOBRE MIM' : `${work.flag} ${work.country.split(' ')[0]}`}</span>
+          <div class="card-hover-play">
+            <span>▶</span>
+          </div>
+        </div>
+        <div class="card-info-box">
+          <h4 class="card-title-text">${work.title}</h4>
+          <span class="card-sub-pt">${work.title_pt}</span>
+          <div class="card-footer-stats">
+            <span>${work.duration}</span>
+            <span>🎙️ Neural</span>
+          </div>
+        </div>
+      `;
+
+      card.onclick = () => {
+        this.openBookModal(work);
+      };
+
+      return card;
+    };
+
+    if (railAllComics) {
+      railAllComics.innerHTML = '';
+      // 1º: Obra sobre Pedro Hagah
+      const pedroWork = massiveEngine.getWork('pedro_biography');
+      if (pedroWork) {
+        railAllComics.appendChild(renderCard(pedroWork, true));
+      }
+
+      // Restante: Cada um sobre um país francófono, na mesma lista lado a lado
+      const countryWorks = massiveEngine.works.filter(w => w.id !== 'pedro_biography');
+      countryWorks.forEach(w => railAllComics.appendChild(renderCard(w, false)));
+    }
+
+    // Navegação por setas no trilho único horizontal (‹ e ›)
+    document.querySelectorAll('.rail-nav-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const railId = btn.getAttribute('data-rail');
+        const rail = document.getElementById(railId);
+        if (rail) {
+          const scrollAmount = btn.classList.contains('prev') ? -320 : 320;
+          rail.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+      };
+    });
+
+    // Ações do Billboard de Destaque
+    const btnHeroPlay = document.getElementById('btn-hero-play');
+    if (btnHeroPlay) {
+      btnHeroPlay.onclick = () => {
+        const defaultWork = massiveEngine.getWork('pedro_biography');
+        massiveEngine.selectWork(defaultWork.id);
+        hub.style.display = 'none';
+        viewport.style.display = 'flex';
+        ambientEngine.ensureContext();
+        this.loadSceneByIndex(0);
+      };
+    }
+
+    const btnHeroBook = document.getElementById('btn-hero-book');
+    if (btnHeroBook) {
+      btnHeroBook.onclick = () => {
+        const defaultWork = massiveEngine.getWork('pedro_biography');
+        this.openBookModal(defaultWork);
+      };
+    }
+
+    // Modal de Publicação Real / Livro Aberto
+    this.setupBookModal();
+  }
+
+  setupBookModal() {
+    const modal = document.getElementById('book-catalog-modal');
+    const btnClose = document.getElementById('btn-close-book-modal');
+    if (btnClose && modal) {
+      btnClose.onclick = () => {
+        modal.style.display = 'none';
+      };
+      modal.onclick = (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+      };
+    }
+  }
+
+  openBookModal(work) {
+    const modal = document.getElementById('book-catalog-modal');
+    if (!modal) return;
+
+    const coverImg = document.getElementById('book-modal-cover-img');
+    const countryEl = document.getElementById('book-modal-country');
+    const badgeEl = document.getElementById('book-modal-badge');
+    const titleFr = document.getElementById('book-modal-title-fr');
+    const titlePt = document.getElementById('book-modal-title-pt');
+    const durationEl = document.getElementById('book-modal-duration');
+    const synFr = document.getElementById('book-modal-synopsis-fr');
+    const synPt = document.getElementById('book-modal-synopsis-pt');
+    const objText = document.getElementById('book-modal-objective-text');
+    const btnPlayMusic = document.getElementById('btn-book-play-music');
+    const chaptersList = document.getElementById('book-modal-chapters-list');
+    const btnStartAll = document.getElementById('btn-book-start-all');
+
+    if (coverImg) coverImg.src = work.coverImage;
+    if (countryEl) countryEl.textContent = `${work.flag} ${work.country}`;
+    if (badgeEl) badgeEl.textContent = work.badge;
+    if (titleFr) titleFr.textContent = work.title;
+    if (titlePt) titlePt.textContent = work.title_pt;
+    if (durationEl) durationEl.textContent = work.duration;
+    if (synFr) synFr.textContent = work.synopsis_fr;
+    if (synPt) synPt.textContent = work.synopsis_pt;
+    if (objText) objText.textContent = work.objective || 'Atingir média mínima de 80% em áudio gravado e atividades de verbos para destravar todos os capítulos.';
+
+    if (btnPlayMusic) {
+      btnPlayMusic.onclick = () => {
+        const audioUrl = (work.soundtrack && work.soundtrack.file) || work.musicTrack || '../assets/audio/opening_theme.mp3';
+        const player = document.getElementById('theme-audio-player');
+        if (player) {
+          player.src = audioUrl;
+          player.play().catch(() => {});
+        }
+      };
+    }
+
+    // Modal de Detalhes do Suno (Letra em 1 parágrafo, Prompt Marie, Influências Underground)
+    const btnViewSuno = document.getElementById('btn-book-view-suno');
+    const sunoModal = document.getElementById('book-suno-modal');
+    const btnCloseSuno = document.getElementById('btn-close-suno-modal');
+    const sunoTitle = document.getElementById('suno-modal-title');
+    const sunoLyrics = document.getElementById('suno-modal-lyrics');
+    const sunoPrompt = document.getElementById('suno-modal-prompt');
+    const sunoStyle = document.getElementById('suno-modal-style');
+    const btnCopyLyrics = document.getElementById('btn-copy-suno-lyrics');
+    const btnCopyPrompt = document.getElementById('btn-copy-suno-prompt');
+
+    if (btnViewSuno && sunoModal) {
+      btnViewSuno.onclick = () => {
+        const snd = work.soundtrack || {};
+        if (sunoTitle) sunoTitle.textContent = `${work.flag} ${snd.title || work.title}`;
+        if (sunoLyrics) sunoLyrics.textContent = snd.lyrics_paragraph || work.synopsis_fr;
+        if (sunoPrompt) sunoPrompt.textContent = snd.suno_prompt_paragraph || 'Darkwave / Indie Electro-Rock track with French male spoken vocals and Marie crystal-clear high harmonies.';
+        if (sunoStyle) sunoStyle.textContent = snd.musical_style_paragraph || 'Estilo Darkwave / Electro-Indie sem clichês tradicionais, ritmo analógico 4x4 e sintetizadores pesados.';
+
+        if (btnCopyLyrics) {
+          btnCopyLyrics.onclick = () => {
+            navigator.clipboard.writeText(snd.lyrics_paragraph || '').then(() => {
+              btnCopyLyrics.textContent = '✅ Letra Copiada!';
+              setTimeout(() => btnCopyLyrics.textContent = '📋 Copiar Letra', 2000);
+            });
+          };
+        }
+
+        if (btnCopyPrompt) {
+          btnCopyPrompt.onclick = () => {
+            navigator.clipboard.writeText(snd.suno_prompt_paragraph || '').then(() => {
+              btnCopyPrompt.textContent = '✅ Prompt Copiado!';
+              setTimeout(() => btnCopyPrompt.textContent = '📋 Copiar Prompt Suno', 2000);
+            });
+          };
+        }
+
+        sunoModal.style.display = 'flex';
+      };
+    }
+
+    if (btnCloseSuno && sunoModal) {
+      btnCloseSuno.onclick = () => sunoModal.style.display = 'none';
+      sunoModal.onclick = (e) => {
+        if (e.target === sunoModal) sunoModal.style.display = 'none';
+      };
+    }
+
+    if (chaptersList) {
+      chaptersList.innerHTML = '';
+      massiveEngine.selectWork(work.id);
+      const chapters = work.chapters || [];
+      let globalStartScene = 0;
+
+      chapters.forEach((chap, idx) => {
+        const startSceneIndex = globalStartScene;
+        const scenesCount = chap.scenes ? chap.scenes.length : 1;
+        globalStartScene += scenesCount;
+
+        const isUnlocked = true; // Liberado: navegação livre entre capítulos mesmo sem os 80%
+        const prog = masteryEngine.getChapterProgress(chap.id);
+        const masteryTag = prog.average >= 80 
+          ? `⭐ ${prog.average}% DOMINADO` 
+          : (prog.average > 0 ? `✨ ${prog.average}% Concluído` : `🔓 DISPONÍVEL`);
+
+        const row = document.createElement('div');
+        row.className = 'toc-item-card';
+        row.innerHTML = `
+          <div class="toc-item-left">
+            <span class="toc-num-badge">${String(idx + 1).padStart(2, '0')}</span>
+            <div class="toc-details">
+              <span class="toc-title-fr">${chap.avatar || '📖'} ${chap.title}</span>
+              <span class="toc-title-pt">${chap.dossier ? chap.dossier.title_pt : ''}</span>
+              <span class="toc-location">${chap.location} • ${scenesCount} cena(s) • <strong class="toc-lock-badge unlocked">${masteryTag}</strong></span>
+            </div>
+          </div>
+          <button class="btn-toc-play">📖 Ler Capítulo</button>
+        `;
+
+        row.onclick = () => {
+          modal.style.display = 'none';
+          document.getElementById('comic-cover-hub').style.display = 'none';
+          document.getElementById('story-viewport').style.display = 'flex';
+          ambientEngine.ensureContext();
+          this.loadSceneByIndex(startSceneIndex);
+        };
+
+        chaptersList.appendChild(row);
+      });
+    }
+
+    if (btnStartAll) {
+      btnStartAll.onclick = () => {
+        massiveEngine.selectWork(work.id);
+        modal.style.display = 'none';
+        document.getElementById('comic-cover-hub').style.display = 'none';
+        document.getElementById('story-viewport').style.display = 'flex';
+        ambientEngine.ensureContext();
+        this.loadSceneByIndex(0);
+      };
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  setupStoryNavigation() {
+    const tapNext = document.getElementById('tap-next');
+    if (tapNext) {
+      tapNext.onclick = () => this.nextScene();
+    }
+
+    const tapPrev = document.getElementById('tap-prev');
+    if (tapPrev) {
+      tapPrev.onclick = () => this.prevScene();
+    }
+
+    // Botão de alternar som ambiente de fundo no topo
+    const btnAmbience = document.getElementById('btn-toggle-ambience');
+    const ambienceIcon = document.getElementById('ambience-icon');
+    const ambienceLabel = document.getElementById('ambience-label');
+    if (btnAmbience) {
+      btnAmbience.onclick = (e) => {
+        e.stopPropagation();
+        ambientEngine.ensureContext();
+        const isPlaying = ambientEngine.toggleMute();
+        btnAmbience.classList.toggle('muted', !isPlaying);
+        if (ambienceIcon) ambienceIcon.textContent = isPlaying ? '🎵' : '🔇';
+        if (ambienceLabel) ambienceLabel.textContent = isPlaying ? 'Fundo' : 'Mudo';
+      };
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const viewport = document.getElementById('story-viewport');
+      if (viewport && viewport.style.display === 'flex') {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          e.preventDefault();
+          this.nextScene();
+        }
+        if (e.key === 'ArrowLeft') {
+          this.prevScene();
+        }
+      }
+    });
+  }
+
+  setupTikTokActions() {
+    const btnRecord = document.getElementById('btn-tiktok-record');
+    const recordIcon = document.getElementById('tiktok-record-icon');
+    const recordLabel = document.getElementById('tiktok-record-label');
+    const btnPlayback = document.getElementById('btn-tiktok-playback');
+    const player = document.getElementById('story-user-player');
+
+    const btnSpeak = document.getElementById('btn-tiktok-speak');
+    const btnDossier = document.getElementById('btn-tiktok-dossier');
+    const btnPt = document.getElementById('btn-tiktok-pt');
+    const ptLabel = document.getElementById('tiktok-pt-label');
+    const btnHome = document.getElementById('btn-tiktok-home');
+
+    // 1. Gravação / Regravação Imediata (Sempre permite regravar por cima!)
+    if (btnRecord) {
+      btnRecord.onclick = async (e) => {
+        e.stopPropagation();
+        // Se está gravando: PARAR e salvar tomada
+        if (speechEngine.isRecording) {
+          btnRecord.classList.remove('recording');
+          recordIcon.textContent = '🎙️';
+          recordLabel.textContent = 'Regravar';
+          
+          const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+          const res = await speechEngine.stopRecording(sc.dialogue_fr);
+          ambientEngine.resumeAfterRecording();
+          if (res && res.audioUrl) {
+            this.lastAudioUrl = res.audioUrl;
+            player.src = res.audioUrl;
+            if (btnPlayback) {
+              btnPlayback.style.display = 'flex';
+            }
+            ambientEngine.duck();
+            player.onended = () => ambientEngine.unduck();
+            player.onpause = () => ambientEngine.unduck();
+            player.play().catch(err => {
+              ambientEngine.unduck();
+              console.log('Toque no botão para ouvir:', err);
+            });
+
+            // Qualifica a fala do aluno e exibe o feedback detalhado
+            if (res.evaluation) {
+              this.showSpeechQualificationToast(res.evaluation, sc.dialogue_fr);
+
+              // Registra a pontuação do áudio na maestria do capítulo
+              masteryEngine.recordAudioScore(sc.chapterId, res.evaluation.score);
+              const valEl = document.getElementById('story-mastery-val');
+              const prog = masteryEngine.getChapterProgress(sc.chapterId);
+              if (valEl) valEl.textContent = `${prog.average}%`;
+
+              // Avalia desbloqueio do próximo capítulo caso atinja 80%
+              const chapters = massiveEngine.activeChapters || [];
+              const currIdx = chapters.findIndex(c => c.id === sc.chapterId);
+              if (currIdx >= 0 && currIdx < chapters.length - 1) {
+                const nextChap = chapters[currIdx + 1];
+                const unlockRes = masteryEngine.evaluateChapterUnlock(sc.chapterId, nextChap.id);
+                if (unlockRes.justUnlocked) {
+                  alert(`🎉 PARABÉNS! META DE 80% ATINGIDA!\n\nVocê desbloqueou o próximo capítulo:\n${nextChap.title} 🔓`);
+                }
+              }
+            }
+          }
+        } 
+        // Se não está gravando: INICIAR NOVA GRAVAÇÃO POR CIMA
+        else {
+          if (player) {
+            try { player.pause(); player.currentTime = 0; } catch(_) {}
+          }
+          naturalVoice.stop();
+
+          btnRecord.classList.add('recording');
+          recordIcon.textContent = '⏹️';
+          recordLabel.textContent = 'Parar';
+          
+          // Para completamente qualquer som de background (silêncio total no microfone)
+          ambientEngine.pauseForRecording();
+          await speechEngine.startRecording();
+        }
+      };
+    }
+
+    // 2. Ouvir a Minha Própria Gravação
+    if (btnPlayback) {
+      btnPlayback.onclick = (e) => {
+        e.stopPropagation();
+        if (this.lastAudioUrl) {
+          ambientEngine.duck();
+          player.currentTime = 0;
+          player.onended = () => ambientEngine.unduck();
+          player.onpause = () => ambientEngine.unduck();
+          player.play().catch(() => {
+            const a = new Audio(this.lastAudioUrl);
+            a.onended = () => ambientEngine.unduck();
+            a.play().catch(() => ambientEngine.unduck());
+          });
+        }
+      };
+    }
+
+    // 3. Ouvir Réplica Completa da Cena
+    if (btnSpeak) {
+      btnSpeak.onclick = (e) => {
+        e.stopPropagation();
+        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+        naturalVoice.speak(sc.dialogue_fr, sc.speaker);
+      };
+    }
+
+    // 4. Abrir Dossier / Notícia
+    if (btnDossier) {
+      btnDossier.onclick = (e) => {
+        e.stopPropagation();
+        this.openDossierDrawer();
+      };
+    }
+
+    // 4.5. Abrir Mini-Game / Desafio de Verbos e Reconstrução
+    const btnMiniGame = document.getElementById('btn-tiktok-minigame');
+    if (btnMiniGame) {
+      btnMiniGame.onclick = (e) => {
+        e.stopPropagation();
+        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+        frenchMiniGame.show(sc.verb_challenge || sc);
+      };
+    }
+
+    // 5. Alternar Tradução PT-BR
+    if (btnPt) {
+      btnPt.onclick = (e) => {
+        e.stopPropagation();
+        this.showTranslation = !this.showTranslation;
+        btnPt.classList.toggle('active', this.showTranslation);
+        if (ptLabel) ptLabel.textContent = this.showTranslation ? 'Trad. ON' : 'Trad. OFF';
+        const ptEl = document.getElementById('story-pt-text');
+        if (ptEl) ptEl.style.display = this.showTranslation ? 'block' : 'none';
+      };
+    }
+
+    // 6. Voltar para a Capa (Catálogo Netflix)
+    if (btnHome) {
+      btnHome.onclick = (e) => {
+        e.stopPropagation();
+        naturalVoice.stop();
+        ambientEngine.stopCurrent();
+        document.getElementById('story-viewport').style.display = 'none';
+        document.getElementById('comic-cover-hub').style.display = 'block';
+      };
+    }
+
+    // Botão de narrador da caixinha amarela (se presente)
+    const btnNarrator = document.getElementById('btn-speak-narrator');
+    if (btnNarrator) {
+      btnNarrator.onclick = (e) => {
+        e.stopPropagation();
+        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+        if (sc && sc.caption) {
+          naturalVoice.speak(sc.caption, 'NARRATEUR');
+        }
+      };
+    }
+  }
+
+  showSpeechQualificationToast(evalData, dialogueFr) {
+    const toast = document.getElementById('speech-qualification-toast');
+    if (toast) toast.style.display = 'none'; // Desativa a tela gigante que ocupava espaço
+
+    if (!evalData) return;
+
+    // 1. Marca as palavras diretamente no texto da cena dentro do balão (zero poluição de tela)
+    const frWords = document.querySelectorAll('#story-fr-text .story-word');
+    if (frWords && frWords.length > 0 && evalData.wordFeedback) {
+      const clean = (t) => (t || '').toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
+      const feedbackMap = new Map();
+      evalData.wordFeedback.forEach(wf => {
+        const k = clean(wf.word);
+        if (k) feedbackMap.set(k, wf.correct);
+      });
+
+      frWords.forEach(wordEl => {
+        const wordText = clean(wordEl.textContent);
+        wordEl.classList.remove('word-correct', 'word-retry');
+        if (feedbackMap.has(wordText)) {
+          const isCorrect = feedbackMap.get(wordText);
+          wordEl.classList.add(isCorrect ? 'word-correct' : 'word-retry');
+        } else {
+          wordEl.classList.add(evalData.score >= 75 ? 'word-correct' : 'word-retry');
+        }
+      });
+    }
+
+    // 2. Insere badge de nota compacto no topo do balão de fala
+    let scoreBadge = document.getElementById('bubble-speech-score-badge');
+    if (!scoreBadge) {
+      scoreBadge = document.createElement('span');
+      scoreBadge.id = 'bubble-speech-score-badge';
+      const headerRow = document.querySelector('.bubble-header-row');
+      if (headerRow) {
+        headerRow.appendChild(scoreBadge);
+      }
+    }
+    scoreBadge.className = `bubble-score-badge ${evalData.badgeClass}`;
+    scoreBadge.innerHTML = `⭐ ${evalData.score}% • ${evalData.gradeTitle}`;
+    scoreBadge.style.display = 'inline-flex';
+
+    // 3. Exibe comentário compacto de 1 linha logo abaixo do texto
+    let commentBox = document.getElementById('bubble-speech-comment');
+    if (!commentBox) {
+      commentBox = document.createElement('div');
+      commentBox.id = 'bubble-speech-comment';
+      const bubble = document.getElementById('story-speech-bubble');
+      if (bubble) {
+        bubble.appendChild(commentBox);
+      }
+    }
+    commentBox.className = 'bubble-feedback-commentary';
+    commentBox.innerHTML = `🎯 <strong>Feedback:</strong> ${evalData.commentary}`;
+    commentBox.style.display = 'block';
+
+    // 4. Libera botão "Minha Voz" no dock lateral
+    const btnPlayback = document.getElementById('btn-tiktok-playback');
+    if (btnPlayback) {
+      btnPlayback.style.display = 'flex';
+    }
+  }
+
+  setupDossierDrawer() {
+    const backdrop = document.getElementById('dossier-drawer-backdrop');
+    const btnClose = document.getElementById('btn-close-dossier');
+    const btnReadAi = document.getElementById('btn-read-dossier-ai');
+    const aiText = document.getElementById('ai-speak-text');
+
+    if (btnClose) {
+      btnClose.onclick = () => {
+        this.closeDossierDrawer();
+      };
+    }
+
+    if (backdrop) {
+      backdrop.onclick = (e) => {
+        if (e.target === backdrop) {
+          this.closeDossierDrawer();
+        }
+      };
+    }
+
+    if (btnReadAi) {
+      btnReadAi.onclick = () => {
+        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+        if (!sc || !sc.dossier) return;
+
+        if (this.isDossierReading) {
+          naturalVoice.stop();
+          this.isDossierReading = false;
+          btnReadAi.classList.remove('reading');
+          aiText.textContent = "ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)";
+          ambientEngine.unduck();
+        } else {
+          this.isDossierReading = true;
+          btnReadAi.classList.add('reading');
+          aiText.textContent = "⏹️ ARRÊTER LA LECTURE PAR L'IA";
+          ambientEngine.duck();
+          naturalVoice.speak(sc.dossier.article_fr, 'NARRATEUR');
+        }
+      };
+    }
+  }
+
+  openDossierDrawer() {
+    const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+    if (!sc || !sc.dossier) return;
+
+    document.getElementById('drawer-badge').textContent = sc.dossier.badge || 'DOSSIER HISTORIQUE';
+    document.getElementById('drawer-title-fr').textContent = sc.dossier.title_fr;
+    document.getElementById('drawer-title-pt').textContent = sc.dossier.title_pt;
+    document.getElementById('drawer-article-fr').textContent = sc.dossier.article_fr;
+    document.getElementById('drawer-article-pt').textContent = sc.dossier.article_pt;
+
+    const btnReadAi = document.getElementById('btn-read-dossier-ai');
+    const aiText = document.getElementById('ai-speak-text');
+    this.isDossierReading = false;
+    if (btnReadAi) btnReadAi.classList.remove('reading');
+    if (aiText) aiText.textContent = "ÉCOUTER L'ARTICLE PAR L'IA (FRANÇAIS)";
+
+    const backdrop = document.getElementById('dossier-drawer-backdrop');
+    if (backdrop) backdrop.style.display = 'flex';
+  }
+
+  closeDossierDrawer() {
+    naturalVoice.stop();
+    this.isDossierReading = false;
+    ambientEngine.unduck();
+    const backdrop = document.getElementById('dossier-drawer-backdrop');
+    if (backdrop) backdrop.style.display = 'none';
+  }
+
+  loadSceneByIndex(idx) {
+    const qualToast = document.getElementById('speech-qualification-toast');
+    if (qualToast) qualToast.style.display = 'none';
+
+    // Limpa feedback inline anterior do balão
+    const oldScoreBadge = document.getElementById('bubble-speech-score-badge');
+    if (oldScoreBadge) oldScoreBadge.remove();
+    const oldComment = document.getElementById('bubble-speech-comment');
+    if (oldComment) oldComment.remove();
+
+    const total = massiveEngine.totalTargetScenes;
+    const clamped = Math.max(0, Math.min(idx, total - 1));
+    this.currentSceneNumber = clamped + 1;
+    const scene = massiveEngine.getScene(clamped);
+
+    // Atualiza o som ambiente contínuo do ambiente específico
+    ambientEngine.setEnvironment(scene.environment);
+
+    // Reseta estado do botão de gravação para a nova cena
+    const btnRecord = document.getElementById('btn-tiktok-record');
+    const recordIcon = document.getElementById('tiktok-record-icon');
+    const recordLabel = document.getElementById('tiktok-record-label');
+    const btnPlayback = document.getElementById('btn-tiktok-playback');
+    if (btnRecord) {
+      btnRecord.classList.remove('recording');
+      if (recordIcon) recordIcon.textContent = '🎙️';
+      if (recordLabel) recordLabel.textContent = 'Gravar';
+    }
+    if (btnPlayback) {
+      btnPlayback.style.display = 'none';
+    }
+    this.lastAudioUrl = null;
+
+    // Barra de progresso dos Stories
+    const bar = document.getElementById('story-progress-bar');
+    if (bar) {
+      bar.innerHTML = '';
+      const visibleSegments = Math.min(total, 10);
+      const progressInTen = (clamped % visibleSegments);
+      for (let i = 0; i < visibleSegments; i++) {
+        const seg = document.createElement('div');
+        seg.className = `story-progress-segment ${i === progressInTen ? 'active' : (i < progressInTen ? 'done' : '')}`;
+        seg.innerHTML = '<div class="story-progress-fill"></div>';
+        bar.appendChild(seg);
+      }
+    }
+
+    // 1. Perfil e Localização
+    document.getElementById('story-avatar').textContent = scene.avatar;
+    document.getElementById('profile-name').textContent = scene.speaker_name;
+    document.getElementById('profile-location').textContent = scene.location;
+    document.getElementById('story-scene-counter').textContent = `CENA #${scene.sceneNumber} / ${total}`;
+
+    // 2. Imagem Vertical com Pré-carregamento Instantâneo
+    const bgImg = document.getElementById('story-bg-img');
+    if (bgImg) {
+      bgImg.src = scene.image;
+      bgImg.onerror = () => {
+        bgImg.src = '../assets/img/p1_1.png';
+      };
+    }
+    document.getElementById('story-sfx').textContent = scene.sfx;
+
+    // 3. Caixa de Narrador (se houver)
+    const captionCard = document.getElementById('story-caption-card');
+    if (scene.caption) {
+      captionCard.style.display = 'flex';
+      document.getElementById('caption-loc-tag').textContent = `CENA ${scene.sceneNumber} —`;
+      document.getElementById('caption-text-body').textContent = scene.caption;
+    } else {
+      captionCard.style.display = 'none';
+    }
+
+    // 4. Balão do Personagem
+    const bubble = document.getElementById('story-speech-bubble');
+    bubble.className = `story-speech-bubble ${scene.speaker === 'ELENA' || scene.speaker === 'AMINA' ? 'elena-theme' : ''}`;
+    document.getElementById('bubble-speaker-tag').textContent = scene.speaker;
+
+    // ========================================================================
+    // DESTAQUE BIDIRECIONAL INTERATIVO PALAVRA POR PALAVRA (FRANCÊS ⇄ PORTUGUÊS)
+    // ========================================================================
+    const frContainer = document.getElementById('story-fr-text');
+    const ptContainer = document.getElementById('story-pt-text');
+
+    const frWords = scene.dialogue_fr.split(' ');
+    const ptWords = scene.dialogue_pt.split(' ');
+
+    frContainer.innerHTML = frWords.map((w, i) => `<span class="story-word" data-fr-idx="${i}">${w}</span>`).join(' ');
+    ptContainer.innerHTML = `<span style="font-weight: 800; color: #0284c7; margin-right: 4px;">Trad.:</span>` + 
+      ptWords.map((w, j) => `<span class="pt-word" data-pt-idx="${j}">${w}</span>`).join(' ');
+    
+    ptContainer.style.display = this.showTranslation ? 'block' : 'none';
+    document.getElementById('ipa-code').textContent = scene.ipa;
+
+    // Conecta o evento de toque em palavras francesas
+    const frSpans = frContainer.querySelectorAll('.story-word');
+    const ptSpans = ptContainer.querySelectorAll('.pt-word');
+
+    frSpans.forEach((frSpan, frIdx) => {
+      frSpan.onclick = (e) => {
+        e.stopPropagation();
+
+        frSpans.forEach(s => s.classList.remove('active-sync'));
+        ptSpans.forEach(s => s.classList.remove('active-sync'));
+
+        frSpan.classList.add('active-sync');
+
+        // Encontra a palavra correspondente real em português
+        const targetPtIndices = lexicalAligner.findMatchingPtIndices(frSpan.textContent, frIdx, frWords, ptWords);
+        targetPtIndices.forEach(idx => {
+          if (ptSpans[idx]) ptSpans[idx].classList.add('active-sync');
+        });
+
+        // Pronuncia a palavra em francês com voz neural de estúdio
+        naturalVoice.speakWord(frSpan.textContent, scene.speaker);
+      };
+    });
+
+    // Conecta o evento de toque em palavras em português
+    ptSpans.forEach((ptSpan, ptIdx) => {
+      ptSpan.onclick = (e) => {
+        e.stopPropagation();
+
+        frSpans.forEach(s => s.classList.remove('active-sync'));
+        ptSpans.forEach(s => s.classList.remove('active-sync'));
+
+        ptSpan.classList.add('active-sync');
+
+        // Encontra a palavra correspondente real em francês
+        const targetFrIndices = lexicalAligner.findMatchingFrIndices(ptSpan.textContent, ptIdx, ptWords, frWords);
+        let spokenWord = '';
+        targetFrIndices.forEach(idx => {
+          if (frSpans[idx]) {
+            frSpans[idx].classList.add('active-sync');
+            spokenWord = frSpans[idx].textContent;
+          }
+        });
+
+        if (spokenWord) {
+          naturalVoice.speakWord(spokenWord, scene.speaker);
+        }
+      };
+    });
+
+    // Toque no corpo do balão pronuncia a frase completa
+    bubble.onclick = (e) => {
+      if (!e.target.classList.contains('story-word') && !e.target.classList.contains('pt-word')) {
+        frSpans.forEach(s => s.classList.remove('active-sync'));
+        ptSpans.forEach(s => s.classList.remove('active-sync'));
+        naturalVoice.speak(scene.dialogue_fr, scene.speaker);
+      }
+    };
+
+    // Reproduz automaticamente a fala em francês daquela cena
+    naturalVoice.speak(scene.dialogue_fr, scene.speaker);
+  }
+
+  nextScene() {
+    // Livre: segue diretamente para o próximo story sem interrupções nem bloqueios de 80%
+    if (this.currentSceneNumber < massiveEngine.totalTargetScenes) {
+      this.loadSceneByIndex(this.currentSceneNumber);
+    } else {
+      this.loadSceneByIndex(0);
+    }
+  }
+
+  showStoryCheckpoint(sc, continueCallback) {
+    const modal = document.getElementById('story-checkpoint-modal');
+    if (!modal) {
+      if (continueCallback) continueCallback();
+      return;
+    }
+
+    const titleEl = document.getElementById('chk-title');
+    const descEl = document.getElementById('chk-desc');
+    const scoreNumEl = document.getElementById('chk-score-num');
+    const fillEl = document.getElementById('chk-progress-fill');
+    const statusBadge = document.getElementById('chk-status-badge');
+    const btnMinigame = document.getElementById('btn-chk-minigame');
+    const btnRecord = document.getElementById('btn-chk-record');
+    const btnContinue = document.getElementById('btn-chk-continue');
+    const btnClose = document.getElementById('btn-close-checkpoint');
+
+    const prog = masteryEngine.getChapterProgress(sc.chapterId);
+    const avg = prog.average || 0;
+
+    if (titleEl) titleEl.textContent = `Ponto de Controle : ${sc.speaker_name}`;
+    if (scoreNumEl) scoreNumEl.textContent = `${avg}% / 80%`;
+    if (fillEl) fillEl.style.width = `${Math.min(100, avg)}%`;
+
+    if (statusBadge) {
+      if (avg >= 80) {
+        statusBadge.innerHTML = `🎉 <strong>Meta de 80% superada com sucesso!</strong> Seu progresso está excelente para destravar os próximos capítulos!`;
+        statusBadge.style.color = '#00f59b';
+        statusBadge.style.borderColor = '#00f59b';
+      } else {
+        statusBadge.innerHTML = `⚡ <strong>Meta atual: ${avg}% / 80%.</strong> Complete o Desafio dos 4 Tempos ou grave seu áudio para garantir o desbloqueio!`;
+        statusBadge.style.color = '#ffee32';
+        statusBadge.style.borderColor = 'rgba(255, 238, 50, 0.4)';
+      }
+    }
+
+    if (btnMinigame) {
+      btnMinigame.onclick = (e) => {
+        e.stopPropagation();
+        modal.style.display = 'none';
+        frenchMiniGame.show(sc.verb_challenge || sc, () => {
+          this.loadSceneByIndex(this.currentSceneNumber);
+        }, sc.chapterId);
+      };
+    }
+
+    if (btnRecord) {
+      btnRecord.onclick = (e) => {
+        e.stopPropagation();
+        modal.style.display = 'none';
+        const docRecordBtn = document.getElementById('btn-tiktok-record');
+        if (docRecordBtn) docRecordBtn.click();
+      };
+    }
+
+    if (btnContinue) {
+      btnContinue.onclick = (e) => {
+        e.stopPropagation();
+        modal.style.display = 'none';
+        if (continueCallback) continueCallback();
+      };
+    }
+
+    if (btnClose) {
+      btnClose.onclick = (e) => {
+        e.stopPropagation();
+        modal.style.display = 'none';
+      };
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  prevScene() {
+    if (this.currentSceneNumber > 1) {
+      this.loadSceneByIndex(this.currentSceneNumber - 2);
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const app = new MassiveComicApp();
+  app.init();
+});

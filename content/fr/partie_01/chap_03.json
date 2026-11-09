@@ -1,0 +1,145 @@
+{
+  "chapter_id": "chap_03",
+  "order": 3,
+  "title_fr": "Les Racines Créatives et la Pédagogie (Design 3D et Enseignement)",
+  "title_pt": "As Raízes Criativas e a Pedagogia (Design 3D e Ensino)",
+  "context": {
+    "summary_pt": "A trajetória criativa de Pedro compreende formação artística, graduação em design gráfico e 4 anos lecionando como professor titular na SAGA Recife.",
+    "bullets_fr": [
+      "2006-2008 : Formation en théâtre, art dramatique et art du clown (Rafael Barreiros).",
+      "2009 : Diplôme secondaire à l'EREM Professeur Antonio Carneiro Leão.",
+      "2010-2012 : Formation START à la SAGA Recife (408h).",
+      "2011 : Masterclass Brasil Stop Motion & Programmation de Jeux à l'ETE Cícero Dias.",
+      "2013 : Certification internationale Autodesk Maya Fundamentals & congrès The Union.",
+      "2012-2015 : Diplôme de Baccalauréat en Design Graphique à l'AESO (TCC : « A Pedra do Reino : Livro Digital Interativo »).",
+      "2012-2016 : Professeur Titulaire à la SAGA Recife pendant 4 ans (Photoshop, Illustrator, After Effects, Maya, 3ds Max).",
+      "2016 : Concours Public SEDUC-PE / FGV (21e rang régional)."
+    ]
+  },
+  "scenes": [
+    {
+      "scene_id": "s3",
+      "title_fr": "La Salle de Classe SAGA et le Projet d'Auteur",
+      "panels": [
+        {
+          "panel_id": "p3_1",
+          "visual_description": "Pedro dans une salle de cours équipée de tablettes graphiques à la SAGA Recife. Il explique un modèle 3D sur écran géant.",
+          "image": null,
+          "voice_direction": "Ton pédagogique, clair et passionné.",
+          "dialogue_fr": "Pendant quatre ans, j'ai enseigné la modélisation 3D, l'animation et les outils de création graphique à la SAGA.",
+          "dialogue_pt": "Durante quatro anos, lecionei modelagem 3D, animação e ferramentas de criação gráfica na SAGA.",
+          "breath_groups": [
+            { "fr": "Pendant quatre ans,", "pause_ms": 2000 },
+            { "fr": "j'ai enseigné la modélisation 3D,", "pause_ms": 2500 },
+            { "fr": "l'animation", "pause_ms": 1500 },
+            { "fr": "et les outils de création graphique", "pause_ms": 2500 },
+            { "fr": "à la SAGA.", "pause_ms": 2000 }
+          ],
+          "audio_target_duration_ms": 6500,
+          "pause_repetition_ms": 6500,
+          "phonetics_guide": "[pɑ̃.dɑ̃ katʁ ɑ̃ | ʒ‿e ɑ̃.sɛ.ɲe la mɔ.de.li.za.sjɔ̃ tʁwa de | l‿a.ni.ma.sjɔ̃ e le.z‿u.ti də kʁe.a.sjɔ̃ ɡʁa.fik a la sa.ɡa]",
+          "pronunciation_tip_pt": "Faça a ligação obrigatória em 'les‿outils' [le.z‿u.ti]. Em 'j'ai enseigné', junte o som [ʒ‿e ɑ̃.sɛ.ɲe] suavemente sem corte abrupto.",
+          "interactive_quiz": {
+            "type": "fill_in_the_blank",
+            "sentence_masked": "Pendant quatre ans, j'ai _____ la modélisation 3D, l'animation et les outils de création graphique à la SAGA.",
+            "correct_answer": "enseigné",
+            "distractors": ["enseigne", "enseigner", "enseignes"],
+            "explanation_pt": "O particípio passado dos verbos do 1º grupo (-er) termina em -é: enseigner → enseigné."
+          }
+        },
+        {
+          "panel_id": "p3_2",
+          "visual_description": "Pedro présentant son livre numérique interactif sur tablette lors de sa soutenance à l'AESO.",
+          "image": null,
+          "voice_direction": "Ton affirmé et solennel, reflet d'une étape académique majeure.",
+          "dialogue_fr": "J'ai obtenu mon diplôme en design graphique avec un projet de livre numérique interactif sur l'œuvre d'Ariano Suassuna.",
+          "dialogue_pt": "Obtive meu diploma em design gráfico com um projeto de livro digital interativo sobre a obra de Ariano Suassuna.",
+          "breath_groups": [
+            { "fr": "J'ai obtenu mon diplôme", "pause_ms": 2200 },
+            { "fr": "en design graphique", "pause_ms": 2000 },
+            { "fr": "avec un projet", "pause_ms": 1800 },
+            { "fr": "de livre numérique interactif", "pause_ms": 2500 },
+            { "fr": "sur l'œuvre d'Ariano Suassuna.", "pause_ms": 2800 }
+          ],
+          "audio_target_duration_ms": 7500,
+          "pause_repetition_ms": 7500,
+          "phonetics_guide": "[ʒ‿e ɔb.tə.ny mɔ̃ di.plom ɑ̃ de.zajn ɡʁa.fik a.vɛk œ̃ pʁɔ.ʒɛ də livʁ ny.me.ʁik ɛ̃.tɛ.ʁak.tif syʁ l‿œvʁ d‿a.ʁja.no swa.sy.na]",
+          "pronunciation_tip_pt": "Em 'l'œuvre' e 'd'Ariano', as elisões unem as palavras. O fonema [œ] é aberto e arredondado.",
+          "interactive_quiz": {
+            "type": "multiple_choice",
+            "sentence_masked": "J'ai _____ mon diplôme en design graphique avec un projet de livre numérique interactif sur l'œuvre d'Ariano Suassuna.",
+            "correct_answer": "obtenu",
+            "distractors": ["obtiens", "obtenir", "obtenue"],
+            "explanation_pt": "O verbo obtenir (3º grupo) forma seu particípio passado em -u: obtenu."
+          }
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "g3_1",
+      "title_fr": "Le Passé Composé avec l'Auxiliaire Avoir",
+      "title_pt": "O Passé Composé com o Auxiliar Avoir",
+      "explanation_pt": "O Passé Composé é o tempo verbal mais utilizado para ações concluídas no passado. É formado pelo verbo auxiliar 'avoir' no presente seguido do particípio passado do verbo principal.",
+      "formula": "Passé Composé = Auxiliaire Avoir au présent + Participe Passé",
+      "table": {
+        "headers": ["Infinitif", "Participe Passé", "Exemple en Première Personne"],
+        "rows": [
+          ["Enseigner", "enseigné", "J'ai enseigné la 3D pendant 4 ans."],
+          ["Obtenir", "obtenu", "J'ai obtenu mon diplôme en 2015."],
+          ["Réussir", "réussi", "J'ai réussi le concours public SEDUC-PE."],
+          ["Compléter", "complété", "J'ai complété la formation Autodesk Maya."]
+        ]
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_a",
+      "type": "fill_in_the_blank",
+      "instruction_fr": "Complétez les phrases au passé composé avec le participe passé approprié.",
+      "instruction_pt": "Complete as frases no passé composé com o particípio passado apropriado.",
+      "items": [
+        {
+          "prompt": "Pendant quatre ans, j'ai _____ (enseigner) la modélisation 3D.",
+          "answer": "enseigné",
+          "explanation_pt": "Verbos em -er formam o particípio passado com -é."
+        },
+        {
+          "prompt": "En 2015, j'ai _____ (obtenir) mon diplôme à l'AESO.",
+          "answer": "obtenu",
+          "explanation_pt": "Obtenir tem particípio passado irregular em -u: obtenu."
+        },
+        {
+          "prompt": "J'ai _____ (réussir) le concours public SEDUC-PE.",
+          "answer": "réussi",
+          "explanation_pt": "Verbos regulares do 2º grupo (-ir) formam particípio passado em -i: réussi."
+        },
+        {
+          "prompt": "J'ai _____ (compléter) la formation Autodesk Maya.",
+          "answer": "complété",
+          "explanation_pt": "Compléter → complété."
+        }
+      ]
+    },
+    {
+      "id": "ex_b",
+      "type": "audio_recording",
+      "instruction_fr": "Enregistrez votre voix en prononçant le script suivant sans vous arrêter.",
+      "instruction_pt": "Grave sua voz com clareza e ritmo cadenciado.",
+      "items": [],
+      "script_fr": "Pendant quatre ans, j'ai enseigné la modélisation 3D, l'animation et les outils de création graphique à la SAGA. J'ai obtenu mon diplôme en design graphique avec un projet de livre numérique interactif sur l'œuvre d'Ariano Suassuna."
+    }
+  ],
+  "vocabulary": [
+    { "fr": "enseigner", "pt": "ensinar / lecionar", "ipa": "[ɑ̃.sɛ.ɲe]" },
+    { "fr": "la modélisation 3D", "pt": "a modelagem 3D", "ipa": "[la mɔ.de.li.za.sjɔ̃ tʁwa de]" },
+    { "fr": "l'animation", "pt": "a animação", "ipa": "[l‿a.ni.ma.sjɔ̃]" },
+    { "fr": "les outils de création graphique", "pt": "as ferramentas de criação gráfica", "ipa": "[le.z‿u.ti də kʁe.a.sjɔ̃ ɡʁa.fik]" },
+    { "fr": "obtenir son diplôme", "pt": "obter o diploma / graduar-se", "ipa": "[ɔb.tə.niʁ sɔ̃ di.plom]" },
+    { "fr": "livre numérique interactif", "pt": "livro digital interativo", "ipa": "[livʁ ny.me.ʁik ɛ̃.tɛ.ʁak.tif]" },
+    { "fr": "l'œuvre", "pt": "a obra", "ipa": "[l‿œvʁ]" },
+    { "fr": "le concours public", "pt": "o concurso público", "ipa": "[lə kɔ̃.kuʁ py.blik]" }
+  ]
+}

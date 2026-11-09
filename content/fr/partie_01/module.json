@@ -1,0 +1,28 @@
+{
+  "module_name": "Partie_1_Pedagogie_Immersive",
+  "title_fr": "Manuel d'Apprentissage du Français - Partie 1",
+  "author": "Pedro Henrique Soares Silva (Pedro Hagah)",
+  "target_language": "fr-FR",
+  "native_language": "pt-BR",
+  "evaluation_metrics": {
+    "pronunciation_accuracy_threshold": 0.85,
+    "speech_rate_wpm_target": 110,
+    "pause_tolerance_seconds": 2.0
+  },
+  "chapters": [
+    { "id": "chap_01", "file": "chap_01.json", "status": "done" },
+    { "id": "chap_02", "file": "chap_02.json", "status": "done" },
+    { "id": "chap_03", "file": "chap_03.json", "status": "done" },
+    { "id": "chap_04", "file": "chap_04.json", "status": "done" }
+  ],
+  "vocabulary_mastery_list": [
+    "architecte de solutions",
+    "intelligence artificielle",
+    "ingénieur des opérations",
+    "modélisation 3D",
+    "chaîne de garde numérique",
+    "se préparer",
+    "se raser",
+    "prendre"
+  ]
+}

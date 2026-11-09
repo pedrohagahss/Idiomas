@@ -1,0 +1,148 @@
+{
+  "chapter_id": "chap_01",
+  "order": 1,
+  "title_fr": "L'Identité, l'Origine et le Profil Multidisciplinaire",
+  "title_pt": "Identidade, Origem e Perfil Multidisciplinar",
+  "context": {
+    "summary_pt": "Nascido em Recife (PE) em 25/06/1990, Pedro Henrique Soares Silva (Pedro Hagah) tem um perfil híbrido entre tecnologia avançada, design e gestão estratégica.",
+    "bullets_fr": [
+      "Architecte de Solutions en Intelligence Artificielle : systèmes multi-agents, pipelines RAG, orchestration LLM.",
+      "Ingénieur des Opérations & Contrôleur de Gestion : restructuration BPM, Unit Economics, conformité automobile.",
+      "Perito Digital & Concepteur LegalTech : chaîne de garde numérique (Art. 411 et 422 du CPC brésilien).",
+      "Designer Graphique & Directeur Artistique : typographie, modélisation 3D, animation.",
+      "Professeur et Formateur : infographie 3D et éducation professionnelle."
+    ]
+  },
+  "scenes": [
+    {
+      "scene_id": "s1",
+      "title_fr": "L'Accueil Tech à Recife",
+      "panels": [
+        {
+          "panel_id": "p1_1",
+          "visual_description": "Plan moyen dynamique dans un studio moderne à Recife. Pedro se tient à côté d'un écran affichant des pipelines d'IA et regarde le lecteur avec assurance.",
+          "image": "../assets/img/p1_1.png",
+          "voice_direction": "Voix calme, pose intellectuelle, liaisons bien marquées.",
+          "dialogue_fr": "Bonjour ! Je m'appelle Pedro Henrique, mais on me connaît aussi sous le nom de Pedro Hagah.",
+          "dialogue_pt": "Olá! Meu nome é Pedro Henrique, mas também sou conhecido pelo nome de Pedro Hagah.",
+          "breath_groups": [
+            { "fr": "Bonjour !", "pause_ms": 1500 },
+            { "fr": "Je m'appelle Pedro Henrique,", "pause_ms": 2500 },
+            { "fr": "mais on me connaît aussi", "pause_ms": 2500 },
+            { "fr": "sous le nom de Pedro Hagah.", "pause_ms": 2500 }
+          ],
+          "audio_target_duration_ms": 5000,
+          "pause_repetition_ms": 5500,
+          "phonetics_guide": "[bɔ̃.ʒuʁ ‖ ʒə.m‿a.pɛl pe.dʁo ɑ̃.ʁik | mɛ ɔ̃ mə kɔ.nɛ o.si su lə nɔ̃ də pe.dʁo a.ɡa]",
+          "pronunciation_tip_pt": "Atenção ao 'on' nasal [ɔ̃] e ao 'j' suave [ʒ] de 'Je' (como o 'j' de 'já'). O 'H' de Henrique e Hagah é mudo.",
+          "interactive_quiz": {
+            "type": "fill_in_the_blank",
+            "sentence_masked": "Bonjour ! Je m'appelle Pedro Henrique, mais on me _____ aussi sous le nom de Pedro Hagah.",
+            "correct_answer": "connaît",
+            "distractors": ["sais", "connaissons", "connaître"],
+            "explanation_pt": "Connaître (conhecer pessoas/lugares) com 'on' (3ª pessoa do singular) → connaît. 'Savoir' (sais) é saber fatos/habilidades."
+          }
+        },
+        {
+          "panel_id": "p1_2",
+          "visual_description": "L'arrière-plan se divise en quatre quadrants stylisés : nœuds de réseaux de neurones (IA), modèle 3D de voiture, graphiques financiers et tableau de classe. Pedro au centre.",
+          "image": null,
+          "voice_direction": "Rythme régulier, insistance sur la structure nominale.",
+          "dialogue_fr": "Je suis architecte de solutions en intelligence artificielle et ingénieur des opérations.",
+          "dialogue_pt": "Sou arquiteto de soluções em inteligência artificial e engenheiro de operações.",
+          "breath_groups": [
+            { "fr": "Je suis architecte de solutions", "pause_ms": 2500 },
+            { "fr": "en intelligence artificielle", "pause_ms": 2500 },
+            { "fr": "et ingénieur des opérations.", "pause_ms": 2500 }
+          ],
+          "audio_target_duration_ms": 5500,
+          "pause_repetition_ms": 6000,
+          "phonetics_guide": "[ʒə sɥi.z‿aʁ.ʃi.tɛkt də sɔ.ly.sjɔ̃ ɑ̃.n‿ɛ̃.te.li.ʒɑ̃s aʁ.ti.fi.sjɛl e ɛ̃.ʒe.njœʁ de.z‿ɔ.pe.ʁa.sjɔ̃]",
+          "pronunciation_tip_pt": "Liaisons obrigatórias: suis‿architecte [z], en‿intelligence [n], des‿opérations [z]. Profissão vem sem artigo: 'Je suis architecte' (não 'un architecte').",
+          "interactive_quiz": {
+            "type": "multiple_choice",
+            "sentence_masked": "Je _____ architecte de solutions en intelligence artificielle et ingénieur des opérations.",
+            "correct_answer": "suis",
+            "distractors": ["es", "est", "ai"],
+            "explanation_pt": "Être com 'je' → suis. 'Ai' é do verbo avoir."
+          }
+        },
+        {
+          "panel_id": "p1_3",
+          "visual_description": "Pedro fait un geste de synthèse, reliant d'une main un schéma typographique et de l'autre un code informatique lumineux.",
+          "image": null,
+          "voice_direction": "Ton assuré, montée mélodique sur l'énumération.",
+          "dialogue_fr": "Mon expertise fait le pont entre le design visuel, la logique algorithmique et la rigueur financière.",
+          "dialogue_pt": "Minha especialidade faz a ponte entre o design visual, a lógica algorítmica e o rigor financeiro.",
+          "breath_groups": [
+            { "fr": "Mon expertise fait le pont", "pause_ms": 2500 },
+            { "fr": "entre le design visuel,", "pause_ms": 2000 },
+            { "fr": "la logique algorithmique", "pause_ms": 2500 },
+            { "fr": "et la rigueur financière.", "pause_ms": 2500 }
+          ],
+          "audio_target_duration_ms": 6000,
+          "pause_repetition_ms": 6500,
+          "phonetics_guide": "[mɔ̃.n‿ɛks.pɛʁ.tiz fɛ lə pɔ̃ ɑ̃tʁ lə de.zajn vi.zɥɛl | la lɔ.ʒik al.ɡɔ.ʁit.mik e la ʁi.ɡœʁ fi.nɑ̃.sjɛʁ]",
+          "pronunciation_tip_pt": "'Expertise' é feminino, mas usa 'mon' (não 'ma') porque começa com vogal; faça a liaison [n]. Na enumeração, a entonação sobe em cada item e desce no último.",
+          "interactive_quiz": {
+            "type": "fill_in_the_blank",
+            "sentence_masked": "_____ expertise fait le pont entre le design visuel, la logique algorithmique et la rigueur financière.",
+            "correct_answer": "Mon",
+            "distractors": ["Ma", "Mes", "Me"],
+            "explanation_pt": "Antes de substantivo feminino iniciado por vogal, 'ma' vira 'mon' por eufonia: mon expertise, mon école."
+          }
+        }
+      ]
+    }
+  ],
+  "grammar": [
+    {
+      "id": "g1",
+      "title_fr": "Le Présent de l'Indicatif : Être, Avoir, S'appeler, Habiter",
+      "title_pt": "Presente do Indicativo: ser/estar, ter, chamar-se, morar",
+      "explanation_pt": "Base da autoapresentação. 'S'appeler' dobra o L nas formas com terminação muda (appelle, appellent). 'Habiter' é regular do 1º grupo (-er).",
+      "table": {
+        "headers": ["Pronom", "Être", "Avoir", "S'appeler", "Habiter"],
+        "rows": [
+          ["Je / J'", "suis", "ai", "m'appelle", "habite"],
+          ["Tu", "es", "as", "t'appelles", "habites"],
+          ["Il / Elle", "est", "a", "s'appelle", "habite"],
+          ["Nous", "sommes", "avons", "nous appelons", "habitons"],
+          ["Vous", "êtes", "avez", "vous appelez", "habitez"],
+          ["Ils / Elles", "sont", "ont", "s'appellent", "habitent"]
+        ]
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_a",
+      "type": "fill_in_the_blank",
+      "instruction_fr": "Complétez les phrases avec le verbe approprié au présent.",
+      "instruction_pt": "Complete as frases com o verbo adequado no presente.",
+      "items": [
+        { "prompt": "Je _____ (être) né à Recife le 25 juin 1990.", "answer": "suis", "explanation_pt": "'Je suis né' é passé composé com o auxiliar être (verbo de nascimento/movimento). Veja o contraste com avoir no Cap. 3." },
+        { "prompt": "Je m'_____ (appeler) Pedro Henrique Soares Silva.", "answer": "appelle" },
+        { "prompt": "Mon travail _____ (faire) le pont entre la technologie et le design.", "answer": "fait" },
+        { "prompt": "Nous _____ (avoir) une expertise multidisciplinaire.", "answer": "avons" }
+      ]
+    },
+    {
+      "id": "ex_b",
+      "type": "audio_recording",
+      "instruction_fr": "Enregistrez votre voix en prononçant le script suivant sans vous arrêter.",
+      "instruction_pt": "Grave sua voz lendo o roteiro abaixo sem parar.",
+      "items": [],
+      "script_fr": "Bonjour. Je m'appelle Pedro Henrique, connu sous le nom de Pedro Hagah. Je suis né à Recife le 25 juin 1990. Je suis architecte en intelligence artificielle et ingénieur des opérations."
+    }
+  ],
+  "vocabulary": [
+    { "fr": "architecte de solutions", "pt": "arquiteto de soluções", "ipa": "[aʁ.ʃi.tɛkt də sɔ.ly.sjɔ̃]" },
+    { "fr": "intelligence artificielle", "pt": "inteligência artificial", "ipa": "[ɛ̃.te.li.ʒɑ̃s aʁ.ti.fi.sjɛl]" },
+    { "fr": "ingénieur des opérations", "pt": "engenheiro de operações", "ipa": "[ɛ̃.ʒe.njœʁ de.z‿ɔ.pe.ʁa.sjɔ̃]" },
+    { "fr": "faire le pont", "pt": "fazer a ponte", "ipa": "[fɛʁ lə pɔ̃]" },
+    { "fr": "la rigueur", "pt": "o rigor", "ipa": "[la ʁi.ɡœʁ]" },
+    { "fr": "connaître", "pt": "conhecer", "ipa": "[kɔ.nɛtʁ]" },
+    { "fr": "être né(e)", "pt": "ter nascido / nascer", "ipa": "[ɛtʁ ne]" }
+  ]
+}
