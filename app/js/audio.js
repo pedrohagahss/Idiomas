@@ -195,8 +195,10 @@ export class NaturalVoiceEngine {
 
     // 1. TENTA REPRODUÇÃO DIRETA DO ARQUIVO MP3 ESTÁTICO (Zero latência, funciona no GitHub Pages no celular)
     let staticFile = null;
-    if (this.manifest && this.manifest[manifestKey]) {
-      staticFile = this.manifest[manifestKey];
+    if (this.manifest) {
+      staticFile = this.manifest[manifestKey] || 
+                   this.manifest[`fr-FR-RemyMultilingualNeural_${cleanText}`] || 
+                   this.manifest[`fr-FR-HenriNeural_${cleanText}`];
     }
 
     if (staticFile) {
@@ -292,7 +294,7 @@ export class NaturalVoiceEngine {
     }
     this.stop();
 
-    const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
+    const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"'’[\]]/g, '').trim();
     if (!cleanWord) {
       if (onEndCallback) onEndCallback();
       return;
@@ -302,9 +304,11 @@ export class NaturalVoiceEngine {
 
     const voice = this.getVoice(character);
     const manifestKey = `${voice}_${cleanWord}`;
+    const staticFile = (this.manifest && this.manifest[manifestKey]) || 
+                       (this.manifest && this.manifest[`fr-FR-HenriNeural_${cleanWord}`]) ||
+                       (this.manifest && this.manifest[`fr-FR-RemyMultilingualNeural_${cleanWord}`]);
 
-    if (this.manifest && this.manifest[manifestKey]) {
-      const staticFile = this.manifest[manifestKey];
+    if (staticFile) {
       try {
         const audio = this.getMasterAudio() || new Audio();
         audio.playsInline = true;
