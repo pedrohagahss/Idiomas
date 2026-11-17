@@ -421,6 +421,13 @@ class MassiveComicApp {
           <button id="btn-backup-whatsapp" class="whatsapp">📲 Enviar link para o WhatsApp</button>
           <button id="btn-backup-link">🔗 Copiar link</button>
         </div>
+        <label class="rec-mode-label" for="rec-mode">🎙️ Modo de gravação</label>
+        <select id="rec-mode" class="rec-mode-select">
+          <option value="auto">Automático: nota + minha voz quando o aparelho permitir</option>
+          <option value="audio">Só gravar minha voz (sem nota)</option>
+          <option value="eval">Só avaliar a pronúncia (sem guardar a voz)</option>
+        </select>
+        <p class="rec-mode-help">Se "Minha voz" não toca ou a gravação falha no seu celular, escolha "Só gravar minha voz".</p>
         <p>Ou use o código manualmente:</p>
         <textarea id="backup-code" rows="3" spellcheck="false"></textarea>
         <div class="progress-backup-actions">
@@ -436,6 +443,11 @@ class MassiveComicApp {
     const statusEl = modal.querySelector('#backup-status');
     const summaryEl = modal.querySelector('#backup-summary');
     const close = () => { modal.style.display = 'none'; };
+    const modeSelect = modal.querySelector('#rec-mode');
+    modeSelect.onchange = () => {
+      speechEngine.setMode(modeSelect.value);
+      statusEl.textContent = 'Modo de gravação salvo ✓';
+    };
 
     btn.onclick = () => {
       let seen = 0, spoken = 0;
@@ -448,6 +460,7 @@ class MassiveComicApp {
         ? `${seen} cena(s) vistas · ${spoken} cena(s) faladas com 75% ou mais.`
         : '⚠️ Este navegador está bloqueando o armazenamento (modo privado?). O progresso não será mantido ao fechar a página.';
       codeEl.value = masteryEngine.exportCode();
+      modeSelect.value = speechEngine.getMode();
       statusEl.textContent = '';
       modal.style.display = 'flex';
     };
@@ -741,11 +754,9 @@ class MassiveComicApp {
       if (!res || sceneIdx !== this.currentSceneNumber - 1) return;
 
       // A gravação fica disponível em "Minha voz" — não toca sozinha por cima do resultado
-      if (res.audioUrl) {
-        this.lastAudioUrl = res.audioUrl;
-        player.src = res.audioUrl;
-        if (btnPlayback) btnPlayback.style.display = 'flex';
-      }
+      this.lastAudioUrl = res.audioUrl || null;
+      if (res.audioUrl) player.src = res.audioUrl;
+      if (btnPlayback) btnPlayback.style.display = res.audioUrl ? 'flex' : 'none';
 
       if (res.evaluation) {
         this.showSpeechQualificationToast(res.evaluation, res.transcript);
@@ -753,8 +764,16 @@ class MassiveComicApp {
         masteryEngine.recordAudioScore(sc.chapterId, res.evaluation.score);
         masteryEngine.recordSceneScore(this.workId(), sceneIdx, res.evaluation.score);
         this.updateMasteryPill(sc);
+        if (res.audioMissing) {
+          const note = document.createElement('div');
+          note.className = 'bubble-heard-line';
+          note.textContent = 'Neste aparelho a nota e a gravação da sua voz não funcionam juntas. Para ouvir sua voz: Meu progresso → Modo de gravação.';
+          const box = document.getElementById('bubble-speech-comment');
+          if (box) box.appendChild(note);
+        }
       } else {
         this.showSpeechNotice(speechEngine.describeReason(res.reason, !!res.audioUrl));
+        if (res.reason === 'audio-only') naturalVoice.chime(true);
       }
     };
 
@@ -781,7 +800,8 @@ class MassiveComicApp {
         const ok = await speechEngine.startRecording({
           targetText: sc.dialogue_fr,
           onInterim: (ev) => this.paintLiveWords(ev),
-          onAutoStop: finishTake
+          onAutoStop: finishTake,
+          onLevel: (l) => btnRecord.style.setProperty('--mic-level', l.toFixed(2))
         });
         if (!ok) {
           resetRecordButton('Gravar');
@@ -793,18 +813,38 @@ class MassiveComicApp {
 
     // 2. Ouvir a Minha Própria Gravação
     if (btnPlayback) {
-      btnPlayback.onclick = (e) => {
+      btnPlayback.onclick = async (e) => {
         e.stopPropagation();
-        if (this.lastAudioUrl) {
-          ambientEngine.duck();
+        if (!this.lastAudioUrl) {
+          this.showSpeechNotice('Ainda não há gravação desta cena. Toque em Gravar e fale a frase.');
+          return;
+        }
+        naturalVoice.stop();
+        ambientEngine.duck();
+        btnPlayback.classList.add('playing');
+        const done = () => { ambientEngine.unduck(); btnPlayback.classList.remove('playing'); };
+        const fail = () => {
+          done();
+          this.showSpeechNotice('Não consegui tocar a gravação neste navegador. Grave de novo e tente outra vez.');
+        };
+        try {
+          player.pause();
+          player.onended = done;
+          player.onpause = done;
+          player.onerror = fail;
+          player.src = this.lastAudioUrl;
           player.currentTime = 0;
-          player.onended = () => ambientEngine.unduck();
-          player.onpause = () => ambientEngine.unduck();
-          player.play().catch(() => {
+          await player.play();
+        } catch (_) {
+          // Alguns navegadores móveis recusam o elemento oculto: tenta um player novo
+          try {
             const a = new Audio(this.lastAudioUrl);
-            a.onended = () => ambientEngine.unduck();
-            a.play().catch(() => ambientEngine.unduck());
-          });
+            a.onended = done;
+            a.onerror = fail;
+            await a.play();
+          } catch (__) {
+            fail();
+          }
         }
       };
     }
@@ -1012,10 +1052,10 @@ class MassiveComicApp {
       };
     }
 
-    // 4. Libera botão "Minha Voz" no dock lateral
+    // 4. "Minha Voz" só aparece quando a gravação realmente existe
     const btnPlayback = document.getElementById('btn-tiktok-playback');
     if (btnPlayback) {
-      btnPlayback.style.display = 'flex';
+      btnPlayback.style.display = this.lastAudioUrl ? 'flex' : 'none';
     }
   }
 

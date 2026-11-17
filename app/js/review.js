@@ -195,7 +195,8 @@ export class ReviewSession {
     if (status) status.textContent = '';
     const ok = await speechEngine.startRecording({
       targetText: c.answer,
-      onAutoStop: () => this.finishSpeaking()
+      onAutoStop: () => this.finishSpeaking(),
+      onLevel: (l) => mic.style.setProperty('--mic-level', l.toFixed(2))
     });
     if (!ok) {
       ambientEngine.resumeAfterRecording();
