@@ -10,6 +10,7 @@ import { lexicalAligner } from './aligner.js';
 import { ambientEngine } from './ambient.js';
 import { frenchMiniGame } from './minigame.js';
 import { masteryEngine } from './progress.js';
+import { reviewSession } from './review.js';
 
 class MassiveComicApp {
   constructor() {
@@ -278,7 +279,9 @@ class MassiveComicApp {
       };
     }
     this.setupBackupModal();
+    this.setupDailyReview();
     this.refreshHubProgress();
+    this.importProgressFromLink();
 
     const btnHeroBook = document.getElementById('btn-hero-book');
     if (btnHeroBook) {
@@ -326,6 +329,11 @@ class MassiveComicApp {
           : 'INICIAR LEITURA';
       }
     }
+    const reviewLabel = document.getElementById('hero-review-label');
+    if (reviewLabel) {
+      const due = reviewSession.dailyCards().length;
+      reviewLabel.textContent = due > 0 ? `REVISÃO DO DIA (${due})` : 'REVISÃO DO DIA';
+    }
     massiveEngine.works.forEach(work => {
       const total = this.workSceneCount(work);
       const stats = masteryEngine.getWorkStats(work.id, total);
@@ -334,6 +342,61 @@ class MassiveComicApp {
       if (fill) fill.style.width = `${stats.percent}%`;
       if (label) label.textContent = stats.seen > 0 ? `${stats.seen}/${total} cenas · 🎙️ ${stats.spoken}` : '🎙️ Neural';
     });
+  }
+
+  setupDailyReview() {
+    const row = document.querySelector('.billboard-actions-row');
+    if (!row || document.getElementById('btn-hero-review')) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-hero-review';
+    btn.className = 'btn-billboard-book btn-hero-review';
+    btn.innerHTML = '<span class="btn-sym">🃏</span><span id="hero-review-label">REVISÃO DO DIA</span>';
+    row.appendChild(btn);
+    btn.onclick = () => {
+      naturalVoice.unlock();
+      const opened = reviewSession.open({
+        cards: reviewSession.dailyCards(),
+        title: 'RÉVISION DU JOUR',
+        continueLabel: 'Voltar à capa',
+        onClose: () => this.refreshHubProgress()
+      });
+      if (!opened) {
+        const label = document.getElementById('hero-review-label');
+        if (label) label.textContent = 'NADA PARA REVISAR HOJE ✓';
+      }
+    };
+  }
+
+  /** Link recebido (ex.: pelo WhatsApp) com "#p=código": junta o progresso ao deste navegador. */
+  async importProgressFromLink() {
+    const match = /[#&]p=([^&]+)/.exec(window.location.hash || '');
+    if (!match) return;
+    const ok = await masteryEngine.importCode(decodeURIComponent(match[1]));
+    try { history.replaceState(null, '', window.location.pathname + window.location.search); } catch (_) {}
+    this.applySavedSettings();
+    this.refreshHubProgress();
+    this.showHubToast(ok
+      ? '✓ Progresso do link carregado. Toque em CONTINUAR para seguir de onde parou.'
+      : '⚠️ O link de progresso está incompleto. Peça para enviar de novo.');
+  }
+
+  showHubToast(message) {
+    let toast = document.getElementById('hub-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'hub-toast';
+      toast.className = 'hub-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = 'block';
+    clearTimeout(this.hubToastTimer);
+    this.hubToastTimer = setTimeout(() => { toast.style.display = 'none'; }, 6000);
+  }
+
+  async progressLink() {
+    const code = await masteryEngine.exportCompact();
+    return `${window.location.origin}${window.location.pathname}#p=${code}`;
   }
 
   setupBackupModal() {
@@ -353,8 +416,13 @@ class MassiveComicApp {
       <div class="progress-backup-card">
         <h3>💾 Meu progresso</h3>
         <p id="backup-summary"></p>
-        <p>O progresso é salvo automaticamente neste navegador. Para continuar em outro aparelho ou navegador, copie o código abaixo e cole lá.</p>
-        <textarea id="backup-code" rows="4" spellcheck="false"></textarea>
+        <p>O progresso é salvo automaticamente neste navegador. Para continuar em outro navegador ou aparelho, envie o link para o seu WhatsApp e abra por lá: quem abrir o link continua de onde você parou.</p>
+        <div class="progress-backup-actions">
+          <button id="btn-backup-whatsapp" class="whatsapp">📲 Enviar link para o WhatsApp</button>
+          <button id="btn-backup-link">🔗 Copiar link</button>
+        </div>
+        <p>Ou use o código manualmente:</p>
+        <textarea id="backup-code" rows="3" spellcheck="false"></textarea>
         <div class="progress-backup-actions">
           <button id="btn-backup-copy">Copiar código</button>
           <button id="btn-backup-import">Restaurar do código colado</button>
@@ -394,8 +462,25 @@ class MassiveComicApp {
         statusEl.textContent = 'Selecionei o código — copie manualmente.';
       }
     };
-    modal.querySelector('#btn-backup-import').onclick = () => {
-      if (masteryEngine.importCode(codeEl.value)) {
+    modal.querySelector('#btn-backup-whatsapp').onclick = async () => {
+      const link = await this.progressLink();
+      const text = `Meu progresso no francês em quadrinhos. Abra o link para continuar de onde parei:\n${link}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      statusEl.textContent = 'Abrindo o WhatsApp… escolha "Você" (conversa consigo mesmo) ou outro contato.';
+    };
+    modal.querySelector('#btn-backup-link').onclick = async () => {
+      const link = await this.progressLink();
+      try {
+        await navigator.clipboard.writeText(link);
+        statusEl.textContent = 'Link copiado ✓';
+      } catch (_) {
+        codeEl.value = link;
+        codeEl.select();
+        statusEl.textContent = 'Selecionei o link — copie manualmente.';
+      }
+    };
+    modal.querySelector('#btn-backup-import').onclick = async () => {
+      if (await masteryEngine.importCode(codeEl.value)) {
         statusEl.textContent = 'Progresso restaurado ✓';
         this.applySavedSettings();
         this.refreshHubProgress();
@@ -1465,11 +1550,28 @@ class MassiveComicApp {
 
   nextScene() {
     this.pauseAutoPlayTemporarily();
-    if (this.currentSceneNumber < massiveEngine.totalTargetScenes) {
-      this.loadSceneByIndex(this.currentSceneNumber);
-    } else {
-      this.loadSceneByIndex(0);
+    const idx = this.currentSceneNumber - 1;
+    const total = massiveEngine.totalTargetScenes;
+    const goNext = () => this.loadSceneByIndex(idx + 1 < total ? idx + 1 : 0);
+
+    // Fim de capítulo: antes de seguir, revisão em flashcards das frases recém-lidas (pulável)
+    const cur = massiveEngine.getScene(idx);
+    const endOfChapter = idx + 1 >= total || massiveEngine.getScene(idx + 1).chapterId !== cur.chapterId;
+    if (endOfChapter && !masteryEngine.wasOfferedToday(cur.chapterId)) {
+      const cards = reviewSession.chapterCards(this.workId(), cur.chapterId);
+      if (cards.length) {
+        masteryEngine.markOffered(cur.chapterId);
+        if (this.isAutoPlay) this.toggleAutoPlay(false);
+        reviewSession.open({
+          cards,
+          title: `RÉVISION · ${cur.seasonTitle}`,
+          continueLabel: 'Continuar a história ▶',
+          onClose: goNext
+        });
+        return;
+      }
     }
+    goNext();
   }
 
   prevScene() {

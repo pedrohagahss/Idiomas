@@ -8,11 +8,13 @@
  * Gravado em localStorage a cada mudança; pede armazenamento persistente ao navegador.
  */
 
+import { schedule, dayNumber } from './flashcards.js';
+
 const KEY = 'pedro_hagah_progress_v2';
 const LEGACY_KEY = 'pedro_hagah_mastery_progress_v1';
 
 function emptyData() {
-  return { v: 2, chapters: {}, works: {}, last: null, settings: {}, updatedAt: 0 };
+  return { v: 2, chapters: {}, works: {}, cards: {}, offered: {}, last: null, settings: {}, updatedAt: 0 };
 }
 
 export class MasteryProgressEngine {
@@ -49,6 +51,8 @@ export class MasteryProgressEngine {
       v: 2,
       chapters: d.chapters && typeof d.chapters === 'object' ? d.chapters : {},
       works: d.works && typeof d.works === 'object' ? d.works : {},
+      cards: d.cards && typeof d.cards === 'object' ? d.cards : {},
+      offered: d.offered && typeof d.offered === 'object' ? d.offered : {},
       last: d.last && d.last.workId ? d.last : null,
       settings: d.settings && typeof d.settings === 'object' ? d.settings : {},
       updatedAt: d.updatedAt || 0
@@ -148,6 +152,22 @@ export class MasteryProgressEngine {
     return { seen, spoken, total: t, percent: Math.min(100, Math.round(100 * seen / t)), pos: w.pos || 0 };
   }
 
+  // ---------- Flashcards (repetição espaçada) ----------
+  getCardStates() { return this.data.cards; }
+
+  rateCard(cardId, rating) {
+    this.data.cards[cardId] = schedule(this.data.cards[cardId], rating, dayNumber());
+    this.save();
+    return this.data.cards[cardId];
+  }
+
+  /** A revisão automática de um capítulo é oferecida no máximo uma vez por dia. */
+  wasOfferedToday(chapterId) { return this.data.offered[chapterId] === dayNumber(); }
+  markOffered(chapterId) {
+    this.data.offered[chapterId] = dayNumber();
+    this.save();
+  }
+
   // ---------- Preferências ----------
   getSetting(name, fallback) {
     return name in this.data.settings ? this.data.settings[name] : fallback;
@@ -157,23 +177,73 @@ export class MasteryProgressEngine {
     this.save();
   }
 
-  // ---------- Backup ----------
+  // ---------- Backup e link de progresso ----------
   exportCode() {
     const json = JSON.stringify(this.data);
     return 'HQFR2.' + btoa(unescape(encodeURIComponent(json)));
   }
 
-  importCode(code) {
+  /** Código compacto (deflate + base64url) para caber em um link de WhatsApp. */
+  async exportCompact() {
     try {
-      const body = String(code || '').trim().replace(/^HQFR2\./, '');
-      const parsed = JSON.parse(decodeURIComponent(escape(atob(body))));
-      if (!parsed || parsed.v !== 2) return false;
-      this.data = this.normalize(parsed);
-      this.save();
-      return true;
+      const bytes = new TextEncoder().encode(JSON.stringify(this.data));
+      const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+      const buf = new Uint8Array(await new Response(stream).arrayBuffer());
+      let bin = '';
+      buf.forEach(b => { bin += String.fromCharCode(b); });
+      return 'HQFR3.' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (_) {
+      return this.exportCode().replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+  }
+
+  async decode(code) {
+    const text = String(code || '').trim();
+    const body = text.replace(/^HQFR[23]\./, '').replace(/-/g, '+').replace(/_/g, '/');
+    if (text.startsWith('HQFR3.')) {
+      const bytes = Uint8Array.from(atob(body), c => c.charCodeAt(0));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return JSON.parse(await new Response(stream).text());
+    }
+    return JSON.parse(decodeURIComponent(escape(atob(body))));
+  }
+
+  /**
+   * Junta o progresso recebido com o deste navegador, sem perder nada dos dois lados:
+   * maiores notas, união das cenas vistas, cartão mais revisado, posição mais recente.
+   */
+  async importCode(code) {
+    let other;
+    try {
+      other = this.normalize(await this.decode(code));
+      if (!other || (!other.updatedAt && !other.last && !Object.keys(other.chapters).length)) return false;
     } catch (_) {
       return false;
     }
+    const mine = this.data;
+    const newer = (other.updatedAt || 0) > (mine.updatedAt || 0);
+
+    Object.entries(other.chapters).forEach(([id, c]) => {
+      const m = this.getChapterProgress(id);
+      ['audioScore', 'quizScore', 'puzzleScore'].forEach(f => { m[f] = Math.max(m[f] || 0, c[f] || 0); });
+      const scores = [m.audioScore, m.quizScore, m.puzzleScore].filter(x => x > 0);
+      m.average = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    });
+    Object.entries(other.works).forEach(([id, w]) => {
+      const m = this.getWork(id);
+      Object.assign(m.seen, w.seen || {});
+      Object.entries(w.best || {}).forEach(([k, v]) => { m.best[k] = Math.max(m.best[k] || 0, v); });
+      if (newer || !m.pos) m.pos = w.pos || m.pos || 0;
+      m.total = m.total || w.total;
+    });
+    Object.entries(other.cards).forEach(([id, c]) => {
+      const m = mine.cards[id];
+      if (!m || (c.n || 0) > (m.n || 0)) mine.cards[id] = c;
+    });
+    if (other.last && (!mine.last || (other.last.ts || 0) > (mine.last.ts || 0))) mine.last = other.last;
+    if (newer) mine.settings = { ...mine.settings, ...other.settings };
+    this.save();
+    return true;
   }
 
   reset() {

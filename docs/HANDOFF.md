@@ -1,12 +1,12 @@
 # HANDOFF — Estado do projeto (fonte da verdade do progresso)
 
-**Última sessão:** 2026-11-17 · Claude — v8: (1) **Progresso persistente de verdade**: `progress.js` v2 (chave `pedro_hagah_progress_v2`, migra a v1) salva posição por obra, última obra, cenas vistas, melhor nota por cena e preferência de tradução; capa mostra "CONTINUAR · CENA N", barra de avanço por obra e modal "MEU PROGRESSO" com código de backup (exportar/importar entre aparelhos). Corrigido bug em que o minigame abria sem `chapterId` (notas de quiz/montagem nunca eram salvas) e recebia `verb_challenge` em vez da cena (abas não atualizavam). (2) **Pronúncia**: novo `js/scoring.js` (puro, testado por `node tools/test_scoring.mjs`) com alinhamento em ordem, chave fonética do francês (homófonos), números por extenso e **sem nota inventada** (antes: piso de 40%, bônus e 72–92% fictícios quando não havia transcrição; o treino de palavra aprovava sempre por causa de `res.recognized` inexistente). `speech.js` reescrito: palavras acendem ao vivo, parada automática ao fim da fala, espera o resultado final do reconhecedor, melhor alternativa, e modo "só transcrição" automático em aparelhos que não gravam e transcrevem juntos. (3) **Fluidez**: a gravação não toca mais sozinha após a avaliação (fica em "Minha voz"), quiz/montagem não falam mais a resposta após o acerto (som curto), botão "Próxima ▶" após ≥75%, pré-carregamento do áudio/imagem da cena seguinte, `alert()` removidos. Vozes mantidas (usuário confirmou que estão boas). Testado ao vivo em Chromium com microfone e reconhecedor simulados.
+**Última sessão:** 2026-11-17 · Claude — **v9 (ainda NÃO publicada; está no branch `claude/busy-fermi-wt121b`)**. (A) **Flashcards "Révision"**: `js/flashcards.js` (puro; `node tools/test_flashcards.mjs`) gera os cartões das próprias cenas, sem conteúdo novo — tipos `recall` (PT→falar FR), `cloze` (lacuna), `listen` (só áudio) e `verb` (tempos do `verb_challenge`); frases longas são divididas na pontuação quando FR e PT casam. Repetição espaçada Leitner (1/3/7/16/35 dias) guardada em `progress.data.cards`. `js/review.js` é a interface: frente → falar (opcional) → virar → Errei/Difícil/Bom/Fácil (microfone só sugere). Gatilhos: fim de capítulo em `nextScene()` (1x por dia por capítulo, pulável) e botão "REVISÃO DO DIA (N)" na capa. Decisões do usuário: sem cartão-relâmpago no meio do capítulo; marcação manual; revisão pulável. (B) **Link de progresso**: "MEU PROGRESSO" → "Enviar link para o WhatsApp" gera `…/app/index.html#p=HQFR3.<deflate+base64url>`; ao abrir, `importProgressFromLink()` FUNDE o progresso (maiores notas, união de cenas, cartão mais revisado) e limpa a URL. (C) v8 anterior: `progress.js` v2 com retomada, `scoring.js`/`speech.js` com avaliação honesta ao vivo, fluxo sem fala automática após acerto. Testado ao vivo em Chromium com microfone e reconhecedor simulados.
 **Próxima tarefa:** Validar em aparelho real (Safari iOS e Chrome Android) o reconhecimento de fala e o modo "só transcrição"; publicar a v8 no GitHub Pages (merge do branch `claude/busy-fermi-wt121b` em `main`). Pendência conhecida: `tools/serve.mjs` tem caminho Windows fixo e não roda em Linux (use `python3 -m http.server 5173`).
 
 ## Como continuar (para o próximo modelo)
 1. Leia `AGENTS.md` (regras) — contém as regras do usuário (PT-BR, opções numeradas, voz Piper).
 2. Para testar o app web: execute `node tools/serve.mjs 5173` e acesse http://localhost:5173/app/ (ou via Cloudflare Tunnel ativo).
-3. Validação de dados: execute `node tools/validate.mjs` e `node tools/test_scoring.mjs`
+3. Validação de dados: execute `node tools/validate.mjs` `node tools/test_scoring.mjs` e `node tools/test_flashcards.mjs`
 
 ### Índice do texto-fonte (`content/fr/partie_01/_source/manual_original.md`, 303 linhas)
 | Seção | Linhas |
@@ -53,11 +53,16 @@
 - [x] T4.5 `progress.js` v2 (retomada, cenas, backup) + correção do minigame sem `chapterId`
 - [x] T4.6 `scoring.js` + `speech.js` (avaliação honesta, ao vivo, parada automática)
 - [x] T4.7 Fluxo sem fala automática após acerto; "Próxima ▶"; pré-carregamento
+- [x] T4.9 Flashcards Révision (fim de capítulo + revisão do dia, repetição espaçada)
+- [x] T4.10 Link de progresso pelo WhatsApp (`#p=`), com fusão de progresso
 - [ ] T4.8 Teste em aparelho real (iOS Safari / Android Chrome)
 
 ## Fase 5 — Mídia (Ilustrações finais e áudio)
 - [ ] T5.1 Gerar ilustrações estilo HQ por painel a partir de `visual_description` (salvar em `assets/img/<panel_id>.png`)
 - [ ] T5.2 (Opcional) Áudios fr-FR com Piper local (voz `fr_FR-siwis-medium`) em `assets/audio/<panel_id>_<n>.wav`
+
+## Fase 7 — Outros idiomas (pedido do usuário, não iniciado)
+- [ ] Usuário quer espanhol, alemão, italiano, russo e outros em paralelo. Exige: histórias traduzidas por idioma, áudios gerados (edge-tts não é acessível da sessão em nuvem), `lang` do reconhecedor e chave fonética por idioma em `scoring.js`.
 
 ## Fase 6 — Próximas partes do manual
 - [ ] Criar `content/fr/partie_02/` com o mesmo schema e adicionar o caminho em `PARTS` no validador e no loader.
