@@ -1,12 +1,12 @@
 # HANDOFF — Estado do projeto (fonte da verdade do progresso)
 
-**Última sessão:** 2026-11-09 · Antigravity — Pipeline de áudio neural completo integrado: 3.142 clipes MP3 de estúdio gerados para todos os 308 diálogos, 308 legendas do narrador, dossiês culturais e 2.325 palavras de vocabulário, eliminando qualquer voz robótica do navegador. Safari iOS e desktop 100% responsivos: removido o `zoom: 0.8` (que causava cortes na viewport do Safari) e implementada escala proporcional multi-dispositivo pura (82% font-base + elementos compactos sem truncar tela nem dock). Gerador Suno AI customizado em modal com prompts por livro. Versão v7 publicada com sucesso no GitHub Pages (`https://pedrohagahss.github.io/Idiomas/app/index.html?v=20261109_7`).
-**Próxima tarefa:** Testes de usabilidade ao vivo com o usuário em Safari mobile e demais dispositivos; criação das músicas Suno AI conforme os prompts gerados.
+**Última sessão:** 2026-11-17 · Claude — v8: (1) **Progresso persistente de verdade**: `progress.js` v2 (chave `pedro_hagah_progress_v2`, migra a v1) salva posição por obra, última obra, cenas vistas, melhor nota por cena e preferência de tradução; capa mostra "CONTINUAR · CENA N", barra de avanço por obra e modal "MEU PROGRESSO" com código de backup (exportar/importar entre aparelhos). Corrigido bug em que o minigame abria sem `chapterId` (notas de quiz/montagem nunca eram salvas) e recebia `verb_challenge` em vez da cena (abas não atualizavam). (2) **Pronúncia**: novo `js/scoring.js` (puro, testado por `node tools/test_scoring.mjs`) com alinhamento em ordem, chave fonética do francês (homófonos), números por extenso e **sem nota inventada** (antes: piso de 40%, bônus e 72–92% fictícios quando não havia transcrição; o treino de palavra aprovava sempre por causa de `res.recognized` inexistente). `speech.js` reescrito: palavras acendem ao vivo, parada automática ao fim da fala, espera o resultado final do reconhecedor, melhor alternativa, e modo "só transcrição" automático em aparelhos que não gravam e transcrevem juntos. (3) **Fluidez**: a gravação não toca mais sozinha após a avaliação (fica em "Minha voz"), quiz/montagem não falam mais a resposta após o acerto (som curto), botão "Próxima ▶" após ≥75%, pré-carregamento do áudio/imagem da cena seguinte, `alert()` removidos. Vozes mantidas (usuário confirmou que estão boas). Testado ao vivo em Chromium com microfone e reconhecedor simulados.
+**Próxima tarefa:** Validar em aparelho real (Safari iOS e Chrome Android) o reconhecimento de fala e o modo "só transcrição"; publicar a v8 no GitHub Pages (merge do branch `claude/busy-fermi-wt121b` em `main`). Pendência conhecida: `tools/serve.mjs` tem caminho Windows fixo e não roda em Linux (use `python3 -m http.server 5173`).
 
 ## Como continuar (para o próximo modelo)
 1. Leia `AGENTS.md` (regras) — contém as regras do usuário (PT-BR, opções numeradas, voz Piper).
 2. Para testar o app web: execute `node tools/serve.mjs 5173` e acesse http://localhost:5173/app/ (ou via Cloudflare Tunnel ativo).
-3. Validação de dados: execute `node tools/validate.mjs`
+3. Validação de dados: execute `node tools/validate.mjs` e `node tools/test_scoring.mjs`
 
 ### Índice do texto-fonte (`content/fr/partie_01/_source/manual_original.md`, 303 linhas)
 | Seção | Linhas |
@@ -48,6 +48,12 @@
 - [x] T4.2 Exercício `audio_recording` (script completo em cada capítulo)
 - [x] T4.3 `js/progress.js`: XP (+10 ouvir, +20 repetição aprovada, +15 quiz, +50 capítulo), streak diário; `localStorage` `hq_fr_progress_v1`; barra de progresso no topo
 - [x] T4.4 Modais de vocabulário e exercícios práticos com reprodução de áudio palavra por palavra
+
+## Fase 4.5 — Persistência e pronúncia v8 ✅
+- [x] T4.5 `progress.js` v2 (retomada, cenas, backup) + correção do minigame sem `chapterId`
+- [x] T4.6 `scoring.js` + `speech.js` (avaliação honesta, ao vivo, parada automática)
+- [x] T4.7 Fluxo sem fala automática após acerto; "Próxima ▶"; pré-carregamento
+- [ ] T4.8 Teste em aparelho real (iOS Safari / Android Chrome)
 
 ## Fase 5 — Mídia (Ilustrações finais e áudio)
 - [ ] T5.1 Gerar ilustrações estilo HQ por painel a partir de `visual_description` (salvar em `assets/img/<panel_id>.png`)

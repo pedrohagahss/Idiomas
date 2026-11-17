@@ -283,6 +283,40 @@ export class NaturalVoiceEngine {
     this.speakWithWebSpeech(cleanText, character, 0.9 * rate, onEndCallback);
   }
 
+  /** Som curto de acerto/erro (substitui a fala automática após cada tarefa). */
+  chime(success = true) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!this.sfxCtx) this.sfxCtx = new AC();
+      const ctx = this.sfxCtx;
+      if (ctx.state === 'suspended') ctx.resume();
+      const notes = success ? [659.25, 987.77] : [330, 262];
+      notes.forEach((freq, i) => {
+        const t = ctx.currentTime + i * 0.11;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = success ? 'sine' : 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch (_) {}
+  }
+
+  /** Aquece o cache do navegador com o áudio da próxima cena (troca de cena sem espera). */
+  preload(text, character = 'PEDRO') {
+    const cleanText = (text || '').replace(/[«»"]/g, '').trim();
+    const file = this.manifest[`${this.getVoice(character)}_${cleanText}`];
+    if (!file || this.preloaded === file) return;
+    this.preloaded = file;
+    try { fetch(`../assets/audio/cache/${file}`).catch(() => {}); } catch (_) {}
+  }
+
   speakSlow(text, character = 'PEDRO', onEndCallback = null) {
     return this.speak(text, character, 0.75, onEndCallback);
   }

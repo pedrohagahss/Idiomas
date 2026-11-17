@@ -195,35 +195,67 @@ export class FrenchMiniGame {
         if (!targetText) return;
 
         if (this.isRecordingSpeechDrill) {
-          this.isRecordingSpeechDrill = false;
-          btnSpeechMic.classList.remove('recording');
-          if (micIcon) micIcon.textContent = '🎙️';
-          if (micLabel) micLabel.textContent = 'Gravar e Validar Fala';
-
-          const res = await speechEngine.stopRecording(targetText);
-          if (res && res.evaluation && speechFeedback) {
-            speechFeedback.style.display = 'block';
-            if (res.evaluation.score >= 70) {
-              speechFeedback.className = 'speech-drill-feedback success';
-              speechFeedback.innerHTML = `🎉 <strong>MUITO BEM! Pontuação: ${res.evaluation.score}%</strong> (${res.evaluation.gradeTitle})<br>${res.evaluation.commentary}`;
-              if (this.currentChapterId) {
-                masteryEngine.recordAudioScore(this.currentChapterId, res.evaluation.score);
-              }
-            } else {
-              speechFeedback.className = 'speech-drill-feedback retry';
-              speechFeedback.innerHTML = `⚡ <strong>Pontuação: ${res.evaluation.score}%</strong>. Tente novamente articulando com calma cada palavra.`;
-            }
-          }
+          await this.finishSpeechDrill();
         } else {
           this.isRecordingSpeechDrill = true;
           btnSpeechMic.classList.add('recording');
           if (micIcon) micIcon.textContent = '⏹️';
-          if (micLabel) micLabel.textContent = 'Parar e Avaliar';
+          if (micLabel) micLabel.textContent = 'Ouvindo… (para sozinho)';
           if (speechFeedback) speechFeedback.style.display = 'none';
-          await speechEngine.startRecording();
+          naturalVoice.stop();
+          const ok = await speechEngine.startRecording({
+            targetText,
+            onAutoStop: () => this.finishSpeechDrill()
+          });
+          if (!ok) {
+            this.isRecordingSpeechDrill = false;
+            btnSpeechMic.classList.remove('recording');
+            if (micIcon) micIcon.textContent = '🎙️';
+            if (micLabel) micLabel.textContent = 'Gravar e Validar Fala';
+            if (speechFeedback) {
+              speechFeedback.style.display = 'block';
+              speechFeedback.className = 'speech-drill-feedback retry';
+              speechFeedback.textContent = 'Não consegui abrir o microfone. Libere a permissão no navegador.';
+            }
+          }
         }
       };
     }
+  }
+
+  async finishSpeechDrill() {
+    if (!this.isRecordingSpeechDrill) return;
+    this.isRecordingSpeechDrill = false;
+    const btnSpeechMic = document.getElementById('btn-minigame-speech-mic');
+    const micIcon = document.getElementById('minigame-mic-icon');
+    const micLabel = document.getElementById('minigame-mic-label');
+    const speechFeedback = document.getElementById('minigame-speech-feedback');
+    const targetText = document.getElementById('minigame-speech-fr').textContent;
+    if (btnSpeechMic) btnSpeechMic.classList.remove('recording');
+    if (micIcon) micIcon.textContent = '🎙️';
+    if (micLabel) micLabel.textContent = 'Gravar e Validar Fala';
+
+    const res = await speechEngine.stopRecording(targetText);
+    if (!res || !speechFeedback) return;
+    speechFeedback.style.display = 'block';
+    const ev = res.evaluation;
+    if (!ev) {
+      speechFeedback.className = 'speech-drill-feedback retry';
+      speechFeedback.textContent = speechEngine.describeReason(res.reason, false);
+      return;
+    }
+    const heard = document.createElement('em');
+    heard.textContent = `Entendi: « ${res.transcript} »`;
+    if (ev.score >= 75) {
+      speechFeedback.className = 'speech-drill-feedback success';
+      speechFeedback.innerHTML = `🎉 <strong>${ev.score}% — ${ev.gradeTitle}</strong><br>`;
+      naturalVoice.chime(true);
+      masteryEngine.recordAudioScore(this.currentChapterId, ev.score);
+    } else {
+      speechFeedback.className = 'speech-drill-feedback retry';
+      speechFeedback.innerHTML = `⚡ <strong>${ev.score}%</strong> — ${ev.commentary}<br>`;
+    }
+    speechFeedback.appendChild(heard);
   }
 
   show(challengeData, onComplete = null, chapterId = null) {
@@ -252,6 +284,8 @@ export class FrenchMiniGame {
     if (ptEl) ptEl.textContent = ptText;
     if (feedback) feedback.style.display = 'none';
   }
+
+  close() { this.hide(); }
 
   hide() {
     if (this.container) {
@@ -357,16 +391,15 @@ export class FrenchMiniGame {
           if (isCorrect) {
             btn.classList.add('correct');
             feedbackEl.className = 'quiz-feedback success';
-            feedbackEl.innerHTML = `✨ <strong>EXCELENTE!</strong> ${quiz.explanation || 'Resposta correta!'} (+100% no Quiz)`;
+            feedbackEl.innerHTML = `✨ <strong>EXCELENTE!</strong> ${quiz.explanation || 'Resposta correta!'} (100% no Quiz — salvo ✓)`;
             feedbackEl.style.display = 'block';
-            naturalVoice.speak(opt, 'PEDRO');
-            if (this.currentChapterId) {
-              masteryEngine.recordQuizScore(this.currentChapterId, 100);
-            }
+            naturalVoice.chime(true);
+            masteryEngine.recordQuizScore(this.currentChapterId, 100);
           } else {
             btn.classList.add('wrong');
             if (allBtns[quiz.correctIndex]) allBtns[quiz.correctIndex].classList.add('correct');
             feedbackEl.className = 'quiz-feedback error';
+            naturalVoice.chime(false);
             feedbackEl.innerHTML = `⚠️ <strong>Quase lá!</strong> A resposta certa é: <em>${quiz.options[quiz.correctIndex]}</em>. ${quiz.explanation || ''}`;
             feedbackEl.style.display = 'block';
           }
@@ -442,12 +475,10 @@ export class FrenchMiniGame {
 
           if (cleanConstructed === cleanOriginal) {
             feedbackEl.className = 'puzzle-feedback success';
-            feedbackEl.innerHTML = `🎉 <strong>PARABÉNS!</strong> Frase perfeitamente montada! (+100% no Desafio)`;
+            feedbackEl.innerHTML = `🎉 <strong>PARABÉNS!</strong> Frase perfeitamente montada! (100% no Desafio — salvo ✓)`;
             feedbackEl.style.display = 'block';
-            naturalVoice.speak(fullSentence, 'PEDRO');
-            if (this.currentChapterId) {
-              masteryEngine.recordPuzzleScore(this.currentChapterId, 100);
-            }
+            naturalVoice.chime(true);
+            masteryEngine.recordPuzzleScore(this.currentChapterId, 100);
           } else {
             feedbackEl.className = 'puzzle-feedback error';
             feedbackEl.innerHTML = `⚠️ A ordem ainda não está exata. Tente reorganizar tocando nas palavras para retirá-las.`;

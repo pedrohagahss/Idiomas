@@ -41,6 +41,7 @@ class MassiveComicApp {
     this.setupSingleWordDrill();
     this.setupPullToCloseGestures();
     this.setupPageLeaveListener();
+    this.applySavedSettings();
   }
 
   preloadCoreImages() {
@@ -228,8 +229,9 @@ class MassiveComicApp {
           <span class="card-sub-pt">${work.title_pt}</span>
           <div class="card-footer-stats">
             <span>${work.duration}</span>
-            <span>🎙️ Neural</span>
+            <span class="card-progress-label" data-work-id="${work.id}">🎙️ Neural</span>
           </div>
+          <div class="card-progress-track"><div class="card-progress-fill" data-work-id="${work.id}"></div></div>
         </div>
       `;
 
@@ -270,15 +272,13 @@ class MassiveComicApp {
     const btnHeroPlay = document.getElementById('btn-hero-play');
     if (btnHeroPlay) {
       btnHeroPlay.onclick = () => {
-        naturalVoice.unlock();
-        const defaultWork = massiveEngine.getWork('pedro_biography');
-        massiveEngine.selectWork(defaultWork.id);
-        hub.style.display = 'none';
-        viewport.style.display = 'flex';
-        ambientEngine.ensureContext();
-        this.loadSceneByIndex(0);
+        const last = masteryEngine.getLast();
+        const work = (last && massiveEngine.getWork(last.workId)) || massiveEngine.getWork('pedro_biography');
+        this.openWorkAt(work.id, last && last.workId === work.id ? last.sceneIdx : 0);
       };
     }
+    this.setupBackupModal();
+    this.refreshHubProgress();
 
     const btnHeroBook = document.getElementById('btn-hero-book');
     if (btnHeroBook) {
@@ -290,6 +290,127 @@ class MassiveComicApp {
 
     // Modal de Publicação Real / Livro Aberto
     this.setupBookModal();
+  }
+
+  openWorkAt(workId, sceneIdx = 0) {
+    naturalVoice.unlock();
+    massiveEngine.selectWork(workId);
+    const modal = document.getElementById('book-catalog-modal');
+    if (modal) modal.style.display = 'none';
+    document.getElementById('comic-cover-hub').style.display = 'none';
+    document.getElementById('story-viewport').style.display = 'flex';
+    ambientEngine.ensureContext();
+    this.loadSceneByIndex(sceneIdx);
+  }
+
+  workSceneCount(work) {
+    return (work.chapters || []).reduce((sum, ch) => sum + (ch.scenes ? ch.scenes.length : 0), 0);
+  }
+
+  showHub() {
+    document.getElementById('story-viewport').style.display = 'none';
+    document.getElementById('comic-cover-hub').style.display = 'block';
+    this.refreshHubProgress();
+  }
+
+  /** Atualiza o botão "Continuar" e o avanço de cada obra na capa. */
+  refreshHubProgress() {
+    const btnHeroPlay = document.getElementById('btn-hero-play');
+    const last = masteryEngine.getLast();
+    const lastWork = last && massiveEngine.getWork(last.workId);
+    if (btnHeroPlay) {
+      const label = btnHeroPlay.querySelector('span:last-child');
+      if (label) {
+        label.textContent = lastWork
+          ? `CONTINUAR · CENA ${last.sceneIdx + 1} — ${lastWork.title}`
+          : 'INICIAR LEITURA';
+      }
+    }
+    massiveEngine.works.forEach(work => {
+      const total = this.workSceneCount(work);
+      const stats = masteryEngine.getWorkStats(work.id, total);
+      const fill = document.querySelector(`.card-progress-fill[data-work-id="${work.id}"]`);
+      const label = document.querySelector(`.card-progress-label[data-work-id="${work.id}"]`);
+      if (fill) fill.style.width = `${stats.percent}%`;
+      if (label) label.textContent = stats.seen > 0 ? `${stats.seen}/${total} cenas · 🎙️ ${stats.spoken}` : '🎙️ Neural';
+    });
+  }
+
+  setupBackupModal() {
+    const row = document.querySelector('.billboard-actions-row');
+    if (!row || document.getElementById('btn-hero-backup')) return;
+    const btn = document.createElement('button');
+    btn.id = 'btn-hero-backup';
+    btn.className = 'btn-billboard-book';
+    btn.innerHTML = '<span class="btn-sym">💾</span><span>MEU PROGRESSO</span>';
+    row.appendChild(btn);
+
+    const modal = document.createElement('div');
+    modal.id = 'progress-backup-modal';
+    modal.className = 'progress-backup-modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+      <div class="progress-backup-card">
+        <h3>💾 Meu progresso</h3>
+        <p id="backup-summary"></p>
+        <p>O progresso é salvo automaticamente neste navegador. Para continuar em outro aparelho ou navegador, copie o código abaixo e cole lá.</p>
+        <textarea id="backup-code" rows="4" spellcheck="false"></textarea>
+        <div class="progress-backup-actions">
+          <button id="btn-backup-copy">Copiar código</button>
+          <button id="btn-backup-import">Restaurar do código colado</button>
+          <button id="btn-backup-close">Fechar</button>
+        </div>
+        <p id="backup-status" class="progress-backup-status"></p>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const codeEl = modal.querySelector('#backup-code');
+    const statusEl = modal.querySelector('#backup-status');
+    const summaryEl = modal.querySelector('#backup-summary');
+    const close = () => { modal.style.display = 'none'; };
+
+    btn.onclick = () => {
+      let seen = 0, spoken = 0;
+      massiveEngine.works.forEach(w => {
+        const st = masteryEngine.getWorkStats(w.id, this.workSceneCount(w));
+        seen += st.seen;
+        spoken += st.spoken;
+      });
+      summaryEl.textContent = masteryEngine.storageOk
+        ? `${seen} cena(s) vistas · ${spoken} cena(s) faladas com 75% ou mais.`
+        : '⚠️ Este navegador está bloqueando o armazenamento (modo privado?). O progresso não será mantido ao fechar a página.';
+      codeEl.value = masteryEngine.exportCode();
+      statusEl.textContent = '';
+      modal.style.display = 'flex';
+    };
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+    modal.querySelector('#btn-backup-close').onclick = close;
+    modal.querySelector('#btn-backup-copy').onclick = async () => {
+      codeEl.select();
+      try {
+        await navigator.clipboard.writeText(codeEl.value);
+        statusEl.textContent = 'Código copiado ✓';
+      } catch (_) {
+        statusEl.textContent = 'Selecionei o código — copie manualmente.';
+      }
+    };
+    modal.querySelector('#btn-backup-import').onclick = () => {
+      if (masteryEngine.importCode(codeEl.value)) {
+        statusEl.textContent = 'Progresso restaurado ✓';
+        this.applySavedSettings();
+        this.refreshHubProgress();
+      } else {
+        statusEl.textContent = 'Código inválido. Cole o código completo (começa com HQFR2.).';
+      }
+    };
+  }
+
+  applySavedSettings() {
+    this.showTranslation = masteryEngine.getSetting('showTranslation', true);
+    const btnPt = document.getElementById('btn-tiktok-pt');
+    const ptLabel = document.getElementById('tiktok-pt-label');
+    if (btnPt) btnPt.classList.toggle('active', this.showTranslation);
+    if (ptLabel) ptLabel.textContent = this.showTranslation ? 'Trad. ON' : 'Trad. OFF';
   }
 
   setupBookModal() {
@@ -445,15 +566,12 @@ class MassiveComicApp {
     }
 
     if (btnStartAll) {
-      btnStartAll.onclick = () => {
-        naturalVoice.unlock();
-        massiveEngine.selectWork(work.id);
-        modal.style.display = 'none';
-        document.getElementById('comic-cover-hub').style.display = 'none';
-        document.getElementById('story-viewport').style.display = 'flex';
-        ambientEngine.ensureContext();
-        this.loadSceneByIndex(0);
-      };
+      const savedPos = masteryEngine.getPosition(work.id);
+      const startLabel = btnStartAll.querySelector('span:last-child');
+      if (startLabel) {
+        startLabel.textContent = savedPos > 0 ? `CONTINUAR DA CENA ${savedPos + 1}` : 'INICIAR LEITURA DESTA OBRA';
+      }
+      btnStartAll.onclick = () => this.openWorkAt(work.id, savedPos);
     }
 
     modal.style.display = 'flex';
@@ -521,71 +639,69 @@ class MassiveComicApp {
     const ptLabel = document.getElementById('tiktok-pt-label');
     const btnHome = document.getElementById('btn-tiktok-home');
 
-    // 1. Gravação / Regravação Imediata (Sempre permite regravar por cima!)
+    // 1. Gravação: um toque para falar; para sozinho quando o aluno termina a frase
+    const resetRecordButton = (label) => {
+      btnRecord.classList.remove('recording');
+      recordIcon.textContent = '🎙️';
+      recordLabel.textContent = label;
+    };
+
+    const finishTake = async () => {
+      if (!speechEngine.isRecording) return;
+      resetRecordButton('Regravar');
+      const sceneIdx = this.currentSceneNumber - 1;
+      const sc = massiveEngine.getScene(sceneIdx);
+      const res = await speechEngine.stopRecording(sc.dialogue_fr);
+      ambientEngine.resumeAfterRecording();
+      if (!res || sceneIdx !== this.currentSceneNumber - 1) return;
+
+      // A gravação fica disponível em "Minha voz" — não toca sozinha por cima do resultado
+      if (res.audioUrl) {
+        this.lastAudioUrl = res.audioUrl;
+        player.src = res.audioUrl;
+        if (btnPlayback) btnPlayback.style.display = 'flex';
+      }
+
+      if (res.evaluation) {
+        this.showSpeechQualificationToast(res.evaluation, res.transcript);
+        naturalVoice.chime(res.evaluation.score >= 75);
+        masteryEngine.recordAudioScore(sc.chapterId, res.evaluation.score);
+        masteryEngine.recordSceneScore(this.workId(), sceneIdx, res.evaluation.score);
+        this.updateMasteryPill(sc);
+      } else {
+        this.showSpeechNotice(speechEngine.describeReason(res.reason, !!res.audioUrl));
+      }
+    };
+
     if (btnRecord) {
       btnRecord.onclick = async (e) => {
         e.stopPropagation();
-        // Se está gravando: PARAR e salvar tomada
         if (speechEngine.isRecording) {
-          btnRecord.classList.remove('recording');
-          recordIcon.textContent = '🎙️';
-          recordLabel.textContent = 'Regravar';
-          
-          const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
-          const res = await speechEngine.stopRecording(sc.dialogue_fr);
+          await finishTake();
+          return;
+        }
+        if (this.isAutoPlay) this.toggleAutoPlay(false);
+        if (player) {
+          try { player.pause(); player.currentTime = 0; } catch (_) {}
+        }
+        naturalVoice.stop();
+        this.clearSpeechFeedback();
+
+        btnRecord.classList.add('recording');
+        recordIcon.textContent = '⏹️';
+        recordLabel.textContent = 'Ouvindo…';
+        ambientEngine.pauseForRecording();
+
+        const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
+        const ok = await speechEngine.startRecording({
+          targetText: sc.dialogue_fr,
+          onInterim: (ev) => this.paintLiveWords(ev),
+          onAutoStop: finishTake
+        });
+        if (!ok) {
+          resetRecordButton('Gravar');
           ambientEngine.resumeAfterRecording();
-          if (res && res.audioUrl) {
-            this.lastAudioUrl = res.audioUrl;
-            player.src = res.audioUrl;
-            if (btnPlayback) {
-              btnPlayback.style.display = 'flex';
-            }
-            ambientEngine.duck();
-            player.onended = () => ambientEngine.unduck();
-            player.onpause = () => ambientEngine.unduck();
-            player.play().catch(err => {
-              ambientEngine.unduck();
-              console.log('Toque no botão para ouvir:', err);
-            });
-
-            // Qualifica a fala do aluno e exibe o feedback detalhado
-            if (res.evaluation) {
-              this.showSpeechQualificationToast(res.evaluation, sc.dialogue_fr);
-
-              // Registra a pontuação do áudio na maestria do capítulo
-              masteryEngine.recordAudioScore(sc.chapterId, res.evaluation.score);
-              const valEl = document.getElementById('story-mastery-val');
-              const prog = masteryEngine.getChapterProgress(sc.chapterId);
-              if (valEl) valEl.textContent = `${prog.average}%`;
-
-              // Avalia desbloqueio do próximo capítulo caso atinja 80%
-              const chapters = massiveEngine.activeChapters || [];
-              const currIdx = chapters.findIndex(c => c.id === sc.chapterId);
-              if (currIdx >= 0 && currIdx < chapters.length - 1) {
-                const nextChap = chapters[currIdx + 1];
-                const unlockRes = masteryEngine.evaluateChapterUnlock(sc.chapterId, nextChap.id);
-                if (unlockRes.justUnlocked) {
-                  alert(`🎉 PARABÉNS! META DE 80% ATINGIDA!\n\nVocê desbloqueou o próximo capítulo:\n${nextChap.title} 🔓`);
-                }
-              }
-            }
-          }
-        } 
-        // Se não está gravando: INICIAR NOVA GRAVAÇÃO POR CIMA
-        else {
-          this.pauseAutoPlayTemporarily();
-          if (player) {
-            try { player.pause(); player.currentTime = 0; } catch(_) {}
-          }
-          naturalVoice.stop();
-
-          btnRecord.classList.add('recording');
-          recordIcon.textContent = '⏹️';
-          recordLabel.textContent = 'Parar';
-          
-          // Para completamente qualquer som de background (silêncio total no microfone)
-          ambientEngine.pauseForRecording();
-          await speechEngine.startRecording();
+          this.showSpeechNotice('Não consegui abrir o microfone. Libere a permissão do microfone no navegador e tente de novo.');
         }
       };
     }
@@ -633,7 +749,7 @@ class MassiveComicApp {
         e.stopPropagation();
         this.pauseAutoPlayTemporarily();
         const sc = massiveEngine.getScene(this.currentSceneNumber - 1);
-        frenchMiniGame.show(sc.verb_challenge || sc);
+        frenchMiniGame.show(sc, null, sc.chapterId);
       };
     }
 
@@ -642,6 +758,7 @@ class MassiveComicApp {
       btnPt.onclick = (e) => {
         e.stopPropagation();
         this.showTranslation = !this.showTranslation;
+        masteryEngine.setSetting('showTranslation', this.showTranslation);
         btnPt.classList.toggle('active', this.showTranslation);
         if (ptLabel) ptLabel.textContent = this.showTranslation ? 'Trad. ON' : 'Trad. OFF';
         const ptEl = document.getElementById('story-pt-text');
@@ -656,8 +773,7 @@ class MassiveComicApp {
         if (this.isAutoPlay) this.toggleAutoPlay(false);
         naturalVoice.stop();
         ambientEngine.stopCurrent();
-        document.getElementById('story-viewport').style.display = 'none';
-        document.getElementById('comic-cover-hub').style.display = 'block';
+        this.showHub();
       };
     }
 
@@ -674,33 +790,68 @@ class MassiveComicApp {
     }
   }
 
-  showSpeechQualificationToast(evalData, dialogueFr) {
+  workId() {
+    return (massiveEngine.activeWork && massiveEngine.activeWork.id) || massiveEngine.works[0].id;
+  }
+
+  updateMasteryPill(sc) {
+    const valEl = document.getElementById('story-mastery-val');
+    if (valEl) valEl.textContent = `${masteryEngine.getChapterProgress(sc.chapterId).average}%`;
+  }
+
+  clearSpeechFeedback() {
+    ['bubble-speech-score-badge', 'bubble-speech-comment'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    document.querySelectorAll('#story-fr-text .story-word').forEach(el => {
+      el.classList.remove('word-correct', 'word-retry', 'word-live');
+    });
+  }
+
+  /** Durante a fala: acende cada palavra assim que o reconhecedor a entende. */
+  paintLiveWords(evalData) {
+    const frWords = document.querySelectorAll('#story-fr-text .story-word');
+    frWords.forEach((el, i) => {
+      const wf = evalData.wordFeedback[i];
+      el.classList.toggle('word-live', !!wf && wf.status !== 'skip' && wf.correct);
+    });
+  }
+
+  speechCommentBox() {
+    let box = document.getElementById('bubble-speech-comment');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'bubble-speech-comment';
+      const bubble = document.getElementById('story-speech-bubble');
+      if (bubble) bubble.appendChild(box);
+    }
+    box.className = 'bubble-feedback-commentary';
+    box.style.display = 'block';
+    box.onclick = (e) => e.stopPropagation();
+    return box;
+  }
+
+  /** Aviso honesto quando não houve transcrição (nenhuma nota é atribuída). */
+  showSpeechNotice(message) {
+    this.clearSpeechFeedback();
+    this.speechCommentBox().textContent = `🎙️ ${message}`;
+  }
+
+  showSpeechQualificationToast(evalData, transcript) {
     const toast = document.getElementById('speech-qualification-toast');
-    if (toast) toast.style.display = 'none'; // Desativa a tela gigante que ocupava espaço
+    if (toast) toast.style.display = 'none';
 
     if (!evalData) return;
 
-    // 1. Marca as palavras diretamente no texto da cena dentro do balão (zero poluição de tela)
+    // 1. Marca cada palavra do balão pelo índice (palavras repetidas não se confundem)
     const frWords = document.querySelectorAll('#story-fr-text .story-word');
-    if (frWords && frWords.length > 0 && evalData.wordFeedback) {
-      const clean = (t) => (t || '').toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
-      const feedbackMap = new Map();
-      evalData.wordFeedback.forEach(wf => {
-        const k = clean(wf.word);
-        if (k) feedbackMap.set(k, wf.correct);
-      });
-
-      frWords.forEach(wordEl => {
-        const wordText = clean(wordEl.textContent);
-        wordEl.classList.remove('word-correct', 'word-retry');
-        if (feedbackMap.has(wordText)) {
-          const isCorrect = feedbackMap.get(wordText);
-          wordEl.classList.add(isCorrect ? 'word-correct' : 'word-retry');
-        } else {
-          wordEl.classList.add(evalData.score >= 75 ? 'word-correct' : 'word-retry');
-        }
-      });
-    }
+    frWords.forEach((wordEl, i) => {
+      wordEl.classList.remove('word-correct', 'word-retry', 'word-live');
+      const wf = evalData.wordFeedback[i];
+      if (!wf || wf.status === 'skip') return;
+      wordEl.classList.add(wf.correct ? 'word-correct' : 'word-retry');
+    });
 
     // 2. Insere badge de nota compacto no topo do balão de fala
     let scoreBadge = document.getElementById('bubble-speech-score-badge');
@@ -716,17 +867,8 @@ class MassiveComicApp {
     scoreBadge.innerHTML = `⭐ ${evalData.score}% • ${evalData.gradeTitle}`;
     scoreBadge.style.display = 'inline-flex';
 
-    // 3. Exibe comentário compacto com botão interativo para treinar palavras com erro
-    let commentBox = document.getElementById('bubble-speech-comment');
-    if (!commentBox) {
-      commentBox = document.createElement('div');
-      commentBox.id = 'bubble-speech-comment';
-      const bubble = document.getElementById('story-speech-bubble');
-      if (bubble) {
-        bubble.appendChild(commentBox);
-      }
-    }
-    commentBox.className = 'bubble-feedback-commentary';
+    // 3. Comentário compacto, o que foi entendido e atalhos (treinar palavras / próxima cena)
+    const commentBox = this.speechCommentBox();
 
     // Monta fila de palavras que precisam de repetição/treino individual
     const retryElements = document.querySelectorAll('#story-fr-text .story-word.word-retry');
@@ -755,8 +897,21 @@ class MassiveComicApp {
       drillButtonHtml = ` <button id="btn-bubble-drill-action" style="margin-left: 8px; background: var(--story-yellow); color: #000; border: none; border-radius: 4px; padding: 2px 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer; box-shadow: 1px 1px 0 #000;">🎯 Treinar Palavras (${this.retryWordsQueue.length})</button>`;
     }
 
-    commentBox.innerHTML = `🎯 <strong>Feedback:</strong> ${evalData.commentary}${drillButtonHtml}`;
-    commentBox.style.display = 'block';
+    const best = masteryEngine.getSceneBest(this.workId(), this.currentSceneNumber - 1);
+    const bestHtml = best > evalData.score ? ` <span style="opacity:.7">(sua melhor: ${best}%)</span>` : '';
+    const nextHtml = evalData.score >= 75
+      ? ` <button id="btn-bubble-next-action" class="bubble-next-btn">Próxima ▶</button>` : '';
+    commentBox.innerHTML = `🎯 ${evalData.commentary}${bestHtml}${drillButtonHtml}${nextHtml}<div class="bubble-heard-line" id="bubble-heard-line"></div>`;
+    const heardEl = document.getElementById('bubble-heard-line');
+    if (heardEl) heardEl.textContent = `Entendi: « ${transcript || ''} »`;
+
+    const btnNext = document.getElementById('btn-bubble-next-action');
+    if (btnNext) {
+      btnNext.onclick = (e) => {
+        e.stopPropagation();
+        this.nextScene();
+      };
+    }
 
     const btnDrill = document.getElementById('btn-bubble-drill-action');
     if (btnDrill && this.retryWordsQueue.length > 0) {
@@ -820,53 +975,66 @@ class MassiveComicApp {
     }
 
     let isRecordingDrill = false;
+    const resetDrillButton = () => {
+      isRecordingDrill = false;
+      btnRecord.classList.remove('recording');
+      if (recordIcon) recordIcon.textContent = '🎙️';
+      if (recordLabel) recordLabel.textContent = 'Gravar e Validar Pronúncia';
+    };
+
+    const finishDrill = async () => {
+      if (!isRecordingDrill) return;
+      resetDrillButton();
+      const targetWord = document.getElementById('drill-word-target').textContent;
+      const res = await speechEngine.stopRecording(targetWord);
+      if (!res || !feedbackBox || !feedbackText) return;
+      feedbackBox.style.display = 'block';
+
+      if (!res.evaluation) {
+        feedbackBox.className = 'drill-feedback-box retry';
+        feedbackText.textContent = speechEngine.describeReason(res.reason, false);
+        if (statusEl) statusEl.textContent = 'Nenhuma nota foi atribuída.';
+        return;
+      }
+
+      if (res.evaluation.score >= 75) {
+        feedbackBox.className = 'drill-feedback-box correct';
+        feedbackText.innerHTML = `✨ <strong>Palavra entendida!</strong>`;
+        if (statusEl) statusEl.textContent = 'O reconhecedor entendeu exatamente esta palavra.';
+        naturalVoice.chime(true);
+        if (this.currentDrillSourceEl) {
+          this.currentDrillSourceEl.classList.remove('word-retry');
+          this.currentDrillSourceEl.classList.add('word-correct');
+        }
+        if (btnNext && this.retryWordsQueue && this.currentDrillIndex < this.retryWordsQueue.length - 1) {
+          btnNext.style.display = 'block';
+        }
+      } else {
+        feedbackBox.className = 'drill-feedback-box retry';
+        feedbackText.textContent = `Entendi: « ${res.transcript} ». Ouça no modo lento 🐢 e tente de novo.`;
+        if (statusEl) statusEl.textContent = 'Toque em "Ouvir Lento (0.75x)" e depois grave novamente.';
+      }
+    };
+
     if (btnRecord) {
       btnRecord.onclick = async () => {
         const targetWord = document.getElementById('drill-word-target').textContent;
         if (!targetWord) return;
-
         if (isRecordingDrill) {
-          isRecordingDrill = false;
-          btnRecord.classList.remove('recording');
-          if (recordIcon) recordIcon.textContent = '🎙️';
-          if (recordLabel) recordLabel.textContent = 'Gravar e Validar Pronúncia';
-          if (statusEl) statusEl.textContent = 'Avaliando pronúncia...';
-
-          const res = await speechEngine.stopRecording(targetWord);
-          if (res && res.evaluation && feedbackBox && feedbackText) {
-            feedbackBox.style.display = 'block';
-            const clean = (t) => (t || '').toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()«»?"']/g, '').trim();
-            const targetClean = clean(targetWord);
-            const recognized = clean(res.recognized);
-            const isMatch = recognized.includes(targetClean) || targetClean.includes(recognized) || res.evaluation.score >= 70;
-
-            if (isMatch) {
-              feedbackBox.className = 'drill-feedback-box correct';
-              feedbackText.innerHTML = `✨ <strong>PARABÉNS! PRONÚNCIA EXATA!</strong><br>Palavra dominada com sucesso!`;
-              if (statusEl) statusEl.textContent = 'Excelente! Pronúncia qualificada com sucesso.';
-
-              if (this.currentDrillSourceEl) {
-                this.currentDrillSourceEl.classList.remove('word-retry');
-                this.currentDrillSourceEl.classList.add('word-correct');
-              }
-
-              if (btnNext && this.retryWordsQueue && this.currentDrillIndex < this.retryWordsQueue.length - 1) {
-                btnNext.style.display = 'block';
-              }
-            } else {
-              feedbackBox.className = 'drill-feedback-box retry';
-              feedbackText.innerHTML = `⚠️ <strong>Você disse: "${res.recognized || '...'}"</strong><br>Tente novamente ouvindo o modo lento 🐢.`;
-              if (statusEl) statusEl.textContent = 'Toque em "Ouvir Lento (0.75x)" e depois grave novamente.';
-            }
-          }
-        } else {
-          isRecordingDrill = true;
-          btnRecord.classList.add('recording');
-          if (recordIcon) recordIcon.textContent = '⏹️';
-          if (recordLabel) recordLabel.textContent = 'Parar Gravação';
-          if (statusEl) statusEl.textContent = 'Fale a palavra claramente agora...';
-          if (feedbackBox) feedbackBox.style.display = 'none';
-          await speechEngine.startRecording();
+          await finishDrill();
+          return;
+        }
+        isRecordingDrill = true;
+        naturalVoice.stop();
+        btnRecord.classList.add('recording');
+        if (recordIcon) recordIcon.textContent = '⏹️';
+        if (recordLabel) recordLabel.textContent = 'Ouvindo…';
+        if (statusEl) statusEl.textContent = 'Fale a palavra agora — eu paro sozinho.';
+        if (feedbackBox) feedbackBox.style.display = 'none';
+        const ok = await speechEngine.startRecording({ targetText: targetWord, onAutoStop: finishDrill });
+        if (!ok) {
+          resetDrillButton();
+          if (statusEl) statusEl.textContent = 'Não consegui abrir o microfone. Libere a permissão no navegador.';
         }
       };
     }
@@ -1109,16 +1277,26 @@ class MassiveComicApp {
     const qualToast = document.getElementById('speech-qualification-toast');
     if (qualToast) qualToast.style.display = 'none';
 
-    // Limpa feedback inline anterior do balão
-    const oldScoreBadge = document.getElementById('bubble-speech-score-badge');
-    if (oldScoreBadge) oldScoreBadge.remove();
-    const oldComment = document.getElementById('bubble-speech-comment');
-    if (oldComment) oldComment.remove();
+    // Limpa feedback anterior e descarta gravação em andamento de outra cena
+    this.clearSpeechFeedback();
+    if (speechEngine.isRecording) {
+      speechEngine.stopRecording();
+      ambientEngine.resumeAfterRecording();
+    }
 
     const total = massiveEngine.totalTargetScenes;
     const clamped = Math.max(0, Math.min(idx, total - 1));
     this.currentSceneNumber = clamped + 1;
     const scene = massiveEngine.getScene(clamped);
+
+    // Salva onde o aluno está (retomada automática) e adianta o áudio/imagem da próxima cena
+    masteryEngine.setPosition(this.workId(), clamped, total);
+    this.updateMasteryPill(scene);
+    if (clamped + 1 < total) {
+      const upcoming = massiveEngine.getScene(clamped + 1);
+      naturalVoice.preload(upcoming.dialogue_fr, upcoming.speaker);
+      new Image().src = upcoming.image;
+    }
 
     // Atualiza o som ambiente contínuo do ambiente específico
     ambientEngine.setEnvironment(scene.environment);
@@ -1352,8 +1530,7 @@ class MassiveComicApp {
       this.attachPullDownHandler(storyViewport, null, () => {
         naturalVoice.stop();
         ambientEngine.stopCurrent();
-        storyViewport.style.display = 'none';
-        document.getElementById('comic-cover-hub').style.display = 'block';
+        this.showHub();
         if (this.isAutoPlay) this.toggleAutoPlay(false);
       });
     }
@@ -1539,7 +1716,7 @@ class MassiveComicApp {
       btnMinigame.onclick = (e) => {
         e.stopPropagation();
         modal.style.display = 'none';
-        frenchMiniGame.show(sc.verb_challenge || sc, () => {
+        frenchMiniGame.show(sc, () => {
           this.loadSceneByIndex(this.currentSceneNumber);
         }, sc.chapterId);
       };
